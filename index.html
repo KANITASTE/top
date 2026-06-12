@@ -6,32 +6,25 @@
 <title>KANITASTE</title>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <style>
-
-/* ============ BASE ============ */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
 body {
   background: #fff;
   font-family: 'VT323', monospace;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: flex; flex-direction: column; align-items: center;
   padding: 40px 20px 60px;
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='20'%3E%3Cpolygon points='0,0 0,16 5,11 8,18 10,17 7,10 13,10' fill='%23000' stroke='%23fff' stroke-width='1'/%3E%3C/svg%3E") 0 0, default;
 }
 
-/* ============ SCENE — no border, overflow hidden for frame-out ============ */
+/* ---- SCENE ---- */
 #scene {
-  position: relative;
-  width: 100%;
-  max-width: 640px;
-  user-select: none;
-  overflow: hidden;
+  position: relative; width: 100%; max-width: 640px;
+  user-select: none; overflow: hidden;
 }
 #main-img { width:100%; height:auto; display:block; }
 
-/* ============ HOTSPOTS ============ */
+/* ---- HOTSPOTS ---- */
 .spot {
   position: absolute;
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ctext y='16' font-size='16' fill='%23000'%3E%2B%3C/text%3E%3C/svg%3E") 10 10, crosshair;
@@ -42,99 +35,120 @@ body {
 #spot-fami    { top:60%; left:0%;  width:26%; height:22%; }
 #spot-window  { top:5%;  left:7%;  width:12%; height:20%; border-radius:50%; }
 #spot-mikan   { top:50%; left:35%; width:20%; height:18%; }
-#spot-disco   { top:50%; left:59%; width:14%; height:8%; }
+#spot-disco   { top:50%; left:59%; width:14%; height:8%;  }
 #spot-kotatsu { top:76%; left:24%; width:42%; height:18%; }
 
-/* ============ EVENT SPRITES ============ */
-/* Hand — slow fade in/out */
+/* ---- FACE ANIMATION PATCHES ---- */
+/* positioned in % over the face — hidden when opacity=0 */
+.face-part {
+  position: absolute;
+  pointer-events: none;
+  z-index: 11;
+  opacity: 1;
+  transition: opacity 0.12s ease;
+}
+/* Closed eyes — shown during blink */
+#eye-l {
+  top: 41.5%; left: 60.2%;
+  width: 12.9%;   /* 184px / 1431 */
+}
+#eye-r {
+  top: 40.7%; left: 70.7%;
+  width: 10.6%;   /* 151px / 1431 */
+}
+/* Closed mouth — shown during mouth-close */
+#mouth-p {
+  top: 49.1%; left: 68.1%;
+  width: 11.2%;   /* 160px / 1431 */
+  opacity: 0;
+}
+/* Cat closed eyes */
+#cateye-p {
+  top: 67.8%; left: 71.0%;
+  width: 9.4%;    /* 134px / 1431 */
+  opacity: 0;
+}
+.face-part img { width:100%; height:auto; display:block; }
+
+/* ---- EVENT SPRITES ---- */
+/* Hand — slow fade, enters from lower-right */
 #hand-sprite {
   position: absolute;
-  top: 42.3%; left: 43.3%;
-  width: 14.8%;
+  top: 49.6%; left: 43.2%;
+  width: 15.9%;   /* 228px / 1431 */
   opacity: 0;
   pointer-events: none;
   z-index: 14;
+  transform: translate(8%, 12%);
 }
 #hand-sprite img { width:100%; height:auto; display:block; }
 
-/* Kotatsu cat — zooms toward viewer, frames out */
+/* Kotatsu cat — zooms out, overwrites in place */
 #kcat-sprite {
   position: absolute;
-  top: 72.4%; left: 46.7%;
-  width: 18.0%;
+  top: 72.2%; left: 44.0%;
+  width: 19.6%;   /* 280px / 1431 */
   opacity: 0;
   pointer-events: none;
   z-index: 26;
   transform-origin: 50% 60%;
-  transform: scale(0.4) translateY(20%);
+  transform: scale(0.35) translateY(22%);
 }
 #kcat-sprite img { width:100%; height:auto; display:block; }
 
-/* UFO porthole — fade toggle */
+/* UFO porthole — toggle fade */
 #porthole-sprite {
   position: absolute;
-  top: 7.1%; left: 9.2%;
-  width: 8.4%;
+  top: 4.1%; left: 1.0%;
+  width: 16.3%;   /* 233px / 1431 */
   opacity: 0;
   pointer-events: none;
   z-index: 12;
-  transition: opacity 1.4s ease;
+  transition: opacity 1.6s ease;
 }
 #porthole-sprite img { width:100%; height:auto; display:block; }
 
-/* ============ BUBBLE — simple, fixed top-center ============ */
+/* ---- BUBBLE — top-center, simple border ---- */
 #bubble {
-  position: absolute;
-  top: 3%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #fff;
-  border: 2px solid #000;
+  position: absolute; top: 3%; left: 50%; transform: translateX(-50%);
+  background: #fff; border: 2px solid #000;
   padding: 5px 16px;
   font-size: clamp(14px, 3vw, 19px);
   white-space: nowrap;
-  pointer-events: none;
-  display: none;
-  z-index: 22;
+  pointer-events: none; display: none; z-index: 22;
 }
 
-/* ============ BREAKOUT ============ */
+/* ---- BREAKOUT ---- */
 #game-overlay {
-  position: absolute;
-  inset: 0;
-  background: #fff;
-  z-index: 30;
-  display: none;
-  flex-direction: column;
+  position: absolute; inset: 0;
+  background: #fff; z-index: 30;
+  display: none; flex-direction: column;
 }
 #game-overlay.active { display: flex; }
 #game-topbar {
-  height: 28px; background: #000; color: #fff;
-  font-size: 18px;
+  height: 28px; background: #000; color: #fff; font-size: 18px;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 8px; flex-shrink: 0;
 }
 #game-topbar button {
-  background: none; border: 1px solid #fff; color: #fff;
-  font-family: 'VT323', monospace; font-size: 16px;
-  cursor: pointer; padding: 0 6px;
+  background:none; border:1px solid #fff; color:#fff;
+  font-family:'VT323',monospace; font-size:16px; cursor:pointer; padding:0 6px;
 }
-#game-cv { flex: 1; display: block; width: 100%; background: #fff; }
+#game-cv { flex:1; display:block; width:100%; background:#fff; }
 
-/* ============ INFO ============ */
-#info { width: 100%; max-width: 640px; margin-top: 24px; padding: 0 4px; }
-.years { font-size: clamp(13px,2.5vw,17px); color: #888; line-height: 2.2; margin-bottom: 14px; }
+/* ---- INFO ---- */
+#info { width:100%; max-width:640px; margin-top:24px; padding:0 4px; }
+.years { font-size:clamp(13px,2.5vw,17px); color:#888; line-height:2.2; margin-bottom:14px; }
 .years a { color:#888; text-decoration:none; border-bottom:1px solid #ccc; }
 .years a:hover { color:#000; border-color:#000; }
 .links { display:flex; gap:16px; flex-wrap:wrap; }
 .links a {
-  font-size: clamp(16px,3vw,22px); color:#000;
+  font-size:clamp(16px,3vw,22px); color:#000;
   text-decoration:none; border-bottom:2px solid #000; padding-bottom:1px;
 }
 .links a:hover { background:#000; color:#fff; }
 
 @media(max-width:480px){ body{padding:20px 12px 48px;} }
-
 </style>
 </head>
 <body>
@@ -142,12 +156,17 @@ body {
 <div id="scene">
   <img src="main.jpg" alt="KANITASTE" id="main-img">
 
+  <!-- Face animation patches (closed eyes/mouth over open face) -->
+  <div class="face-part" id="eye-l">  <img src="eye_l.png"  alt=""></div>
+  <div class="face-part" id="eye-r">  <img src="eye_r.png"  alt=""></div>
+  <div class="face-part" id="mouth-p"><img src="mouth.png"   alt=""></div>
+  <div class="face-part" id="cateye-p"><img src="cateyes.png" alt=""></div>
+
   <!-- Event sprites -->
-  <div id="hand-sprite"><img src="hand.png" alt=""></div>
-  <div id="kcat-sprite"><img src="cat.png" alt=""></div>
+  <div id="hand-sprite">   <img src="hand.png"     alt=""></div>
+  <div id="kcat-sprite">   <img src="cat.png"      alt=""></div>
   <div id="porthole-sprite"><img src="porthole.png" alt=""></div>
 
-  <!-- Bubble -->
   <div id="bubble"></div>
 
   <!-- Breakout -->
@@ -188,42 +207,112 @@ body {
 // ============================================================
 function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
-// Shared AudioContext (browsers limit instances)
-let _ac=null;
+let _ac = null;
 function getAC(){
-  if(!_ac){ try{ _ac=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  if(!_ac) try{ _ac=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){}
   return _ac;
 }
-function beep(freq, type, dur, vol){
+function beep(freq,type,dur,vol){
   const ac=getAC(); if(!ac) return;
   try{
     const o=ac.createOscillator(), g=ac.createGain();
     o.connect(g); g.connect(ac.destination);
     o.type=type||'square'; o.frequency.value=freq;
-    g.gain.setValueAtTime(vol||0.08, ac.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+dur);
+    g.gain.setValueAtTime(vol||0.08,ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+dur);
     o.start(); o.stop(ac.currentTime+dur);
   }catch(e){}
 }
 
-// Safe localStorage (Brave/private mode can throw)
 const store={
   get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
   set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} },
 };
 
-// Bubble — fixed top-center
-const bubbleEl=document.getElementById('bubble');
-let bubbleTimer=null;
+const bubbleEl = document.getElementById('bubble');
+let bubbleTimer = null;
 function showBubble(text){
-  bubbleEl.textContent=text;
-  bubbleEl.style.display='block';
+  bubbleEl.textContent = text;
+  bubbleEl.style.display = 'block';
   clearTimeout(bubbleTimer);
-  bubbleTimer=setTimeout(()=>{ bubbleEl.style.display='none'; },2600);
+  bubbleTimer = setTimeout(()=>{ bubbleEl.style.display='none'; }, 2600);
 }
 
 // ============================================================
-// FACE
+// FACE BLINK / MOUTH ANIMATION
+// ============================================================
+// eyes: opacity=1 means closed-eye patch visible (open eyes are in base img)
+// We start with patches HIDDEN (opacity=0), show briefly for blink
+const eyeL  = document.getElementById('eye-l');
+const eyeR  = document.getElementById('eye-r');
+const mouthP = document.getElementById('mouth-p');
+const cateyeP = document.getElementById('cateye-p');
+
+// Start hidden
+eyeL.style.opacity  = '0';
+eyeR.style.opacity  = '0';
+
+function doBlink(){
+  // Quick show -> hide (blink)
+  eyeL.style.transition = eyeR.style.transition = 'opacity 0.06s';
+  eyeL.style.opacity = eyeR.style.opacity = '1';
+  setTimeout(()=>{
+    eyeL.style.opacity = eyeR.style.opacity = '0';
+  }, 120);
+}
+
+function doMouth(){
+  // Soft close mouth for a moment
+  mouthP.style.transition = 'opacity 0.15s';
+  mouthP.style.opacity = '1';
+  setTimeout(()=>{
+    mouthP.style.transition = 'opacity 0.25s';
+    mouthP.style.opacity = '0';
+  }, 500 + Math.random()*300);
+}
+
+function doCatBlink(){
+  cateyeP.style.transition = 'opacity 0.06s';
+  cateyeP.style.opacity = '1';
+  setTimeout(()=>{ cateyeP.style.opacity='0'; }, 100);
+}
+
+// Randomised blink scheduler (every 2~6s, sometimes double-blink)
+function scheduleBlink(){
+  const delay = 2000 + Math.random()*4000;
+  setTimeout(()=>{
+    doBlink();
+    // occasional double blink
+    if(Math.random()<0.3) setTimeout(doBlink, 220);
+    scheduleBlink();
+  }, delay);
+}
+
+// Mouth moves every 4~10s
+function scheduleMouth(){
+  const delay = 4000 + Math.random()*6000;
+  setTimeout(()=>{
+    doMouth();
+    scheduleMouth();
+  }, delay);
+}
+
+// Cat blink every 3~8s
+function scheduleCatBlink(){
+  const delay = 3000 + Math.random()*5000;
+  setTimeout(()=>{
+    doCatBlink();
+    if(Math.random()<0.25) setTimeout(doCatBlink, 180);
+    scheduleCatBlink();
+  }, delay);
+}
+
+scheduleBlink();
+scheduleMouth();
+scheduleCatBlink();
+
+// ============================================================
+// FACE — dialogue
 // ============================================================
 const faceLines=[
   'ん〜……こんにちはだねぇ〜！',
@@ -237,11 +326,12 @@ const faceLines=[
 let faceIdx=0;
 document.getElementById('spot-face').addEventListener('click',()=>{
   beep(660,'sine',0.18,0.07);
+  doBlink(); // blink when spoken to
   showBubble(faceLines[faceIdx++%faceLines.length]);
 });
 
 // ============================================================
-// LAP CAT — meow / 5-click shake (kept)
+// LAP CAT — meow / 5-click shake
 // ============================================================
 const meows=['にゃー！','みゃー♪','ふにゃ〜','にゃん！','みゅー？'];
 let catClicks=0, catTimer=null;
@@ -261,6 +351,7 @@ document.getElementById('spot-cat').addEventListener('click',()=>{
     },50);
     return;
   }
+  doCatBlink();
   beep(rand([460,520,580]),'sine',0.22,0.08);
   showBubble(rand(meows));
 });
@@ -276,7 +367,7 @@ document.getElementById('spot-tv').addEventListener('click',()=>{
 });
 
 // ============================================================
-// MIKAN HAND — slow fade in, hold, slow fade out
+// MIKAN HAND — slow fade from lower-right
 // ============================================================
 let handBusy=false;
 
@@ -285,35 +376,34 @@ function playHand(){
   handBusy=true;
   const el=document.getElementById('hand-sprite');
 
-  // slow fade in with subtle drift
   el.style.transition='none';
-  el.style.transform='translate(3%,2%)';
+  el.style.transform='translate(8%, 12%)';
   el.style.opacity='0';
 
-  requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
-    el.style.transition='opacity 2.2s ease, transform 2.2s ease';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    el.style.transition='opacity 2.4s ease, transform 2.4s ease';
     el.style.opacity='1';
     el.style.transform='translate(0,0)';
-  }); });
+  }));
 
   beep(180,'sine',0.4,0.04);
 
-  // gentle grab wiggle mid-hold
+  // subtle grab
   setTimeout(()=>{
-    el.style.transition='transform 0.25s ease';
-    el.style.transform='translate(0.6%,-0.5%)';
-    setTimeout(()=>{ el.style.transform='translate(0,0)'; },260);
-    beep(240,'sine',0.2,0.05);
-  },2600);
+    el.style.transition='transform 0.28s ease';
+    el.style.transform='translate(0.8%,-0.6%)';
+    setTimeout(()=>{ el.style.transform='translate(0,0)'; },290);
+    beep(240,'sine',0.18,0.04);
+  },2800);
 
-  // slow fade out with drift
+  // slow fade out
   setTimeout(()=>{
-    el.style.transition='opacity 2.2s ease, transform 2.2s ease';
+    el.style.transition='opacity 2.4s ease, transform 2.4s ease';
     el.style.opacity='0';
-    el.style.transform='translate(3%,2%)';
-  },3600);
+    el.style.transform='translate(8%,12%)';
+  },4000);
 
-  setTimeout(()=>{ handBusy=false; },6000);
+  setTimeout(()=>{ handBusy=false; },6600);
 }
 
 document.getElementById('spot-mikan').addEventListener('click',()=>{
@@ -321,14 +411,13 @@ document.getElementById('spot-mikan').addEventListener('click',()=>{
   playHand();
 });
 
-// random auto event
 function scheduleHand(){
-  setTimeout(()=>{ playHand(); scheduleHand(); }, 25000+Math.random()*40000);
+  setTimeout(()=>{ playHand(); scheduleHand(); },25000+Math.random()*40000);
 }
 scheduleHand();
 
 // ============================================================
-// KOTATSU CAT — pops out, zooms toward viewer, frames out fading
+// KOTATSU CAT — pop out → zoom toward camera → fade out
 // ============================================================
 let kcatBusy=false;
 
@@ -337,34 +426,33 @@ function playKotatsuCat(){
   kcatBusy=true;
   const el=document.getElementById('kcat-sprite');
 
-  // reset
   el.style.transition='none';
-  el.style.transform='scale(0.4) translateY(20%)';
+  el.style.transform='scale(0.35) translateY(22%)';
   el.style.opacity='0';
 
-  // phase 1: pop out of kotatsu
-  requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
-    el.style.transition='transform 0.4s cubic-bezier(0.34,1.4,0.64,1), opacity 0.3s';
+  // pop up
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    el.style.transition='transform 0.38s cubic-bezier(0.34,1.4,0.64,1), opacity 0.25s';
     el.style.transform='scale(1) translateY(0)';
     el.style.opacity='1';
-  }); });
+  }));
 
   beep(200,'sawtooth',0.35,0.13);
 
-  // phase 2: zoom toward viewer — grows huge, frames out, fades
+  // zoom toward camera + fade out
   setTimeout(()=>{
-    el.style.transition='transform 1.5s cubic-bezier(0.5,0,0.9,0.4), opacity 1.0s ease 0.6s';
-    el.style.transform='scale(6) translateY(-35%)';
+    el.style.transition='transform 1.6s cubic-bezier(0.5,0,0.85,0.3), opacity 1.0s ease 0.55s';
+    el.style.transform='scale(7) translateY(-30%)';
     el.style.opacity='0';
-    beep(160,'sawtooth',0.6,0.15);
-    setTimeout(()=>beep(140,'sawtooth',0.4,0.1),250);
-  },800);
+    beep(160,'sawtooth',0.6,0.14);
+    setTimeout(()=>beep(140,'sawtooth',0.35,0.09),220);
+  },850);
 
   setTimeout(()=>{
     el.style.transition='none';
-    el.style.transform='scale(0.4) translateY(20%)';
+    el.style.transform='scale(0.35) translateY(22%)';
     kcatBusy=false;
-  },2700);
+  },2900);
 }
 
 document.getElementById('spot-kotatsu').addEventListener('click',()=>{
@@ -373,7 +461,7 @@ document.getElementById('spot-kotatsu').addEventListener('click',()=>{
 });
 
 // ============================================================
-// LEFT WINDOW — UFO porthole fade toggle
+// LEFT WINDOW — UFO porthole toggle
 // ============================================================
 let portholeOn=false;
 document.getElementById('spot-window').addEventListener('click',()=>{
@@ -395,13 +483,12 @@ document.getElementById('spot-window').addEventListener('click',()=>{
 document.getElementById('spot-disco').addEventListener('click',()=>{
   const p=42150+Math.round((Math.random()-0.5)*600);
   const c=((Math.random()-0.48)*3).toFixed(1);
-  const s=c>=0?'+':'';
   beep(880,'sine',0.12,0.07);
-  showBubble(`DISCO ¥${p.toLocaleString()} (${s}${c}%)`);
+  showBubble('DISCO ¥'+p.toLocaleString()+' ('+(c>=0?'+':'')+c+'%)');
 });
 
 // ============================================================
-// FAMICOM — open game
+// FAMICOM
 // ============================================================
 document.getElementById('spot-fami').addEventListener('click',()=>{
   beep(523,'square',0.12,0.07);
@@ -427,7 +514,7 @@ function openGame(){
   const topbar=document.getElementById('game-topbar');
   const cv=document.getElementById('game-cv');
   cv.width=scene.offsetWidth;
-  cv.height=Math.max(200, scene.offsetHeight - topbar.offsetHeight);
+  cv.height=Math.max(200,scene.offsetHeight-topbar.offsetHeight);
   bk.hi=parseInt(store.get('bk_hi')||'0');
   bk.state='title';
   if(!gameRaf) gameLoop();
@@ -441,12 +528,12 @@ window.closeGame=function(){
 
 function initBricks(cv){
   bk.bricks=[];
-  const cols=8, rows=4, gx=6, gy=2;
+  const cols=8,rows=4,gx=6,gy=2;
   const bw=(cv.width-gx*(cols+1))/cols;
   const bh=Math.min(16,(cv.height*0.3)/rows);
   for(let r=0;r<rows;r++)
     for(let c=0;c<cols;c++)
-      bk.bricks.push({x:gx+c*(bw+gx), y:32+r*(bh+gy), w:bw, h:bh, alive:true, row:r});
+      bk.bricks.push({x:gx+c*(bw+gx),y:32+r*(bh+gy),w:bw,h:bh,alive:true,row:r});
 }
 
 function resetBall(cv){
@@ -458,13 +545,10 @@ function resetBall(cv){
 }
 
 function initPlay(cv){
-  bk.pad.w=cv.width*0.18; bk.pad.h=8;
-  bk.pad.spd=cv.width*0.015;
-  bk.pad.x=cv.width/2-bk.pad.w/2;
-  bk.pad.y=cv.height-24;
+  bk.pad.w=cv.width*0.18; bk.pad.h=8; bk.pad.spd=cv.width*0.015;
+  bk.pad.x=cv.width/2-bk.pad.w/2; bk.pad.y=cv.height-24;
   bk.score=0; bk.lives=3;
-  initBricks(cv); resetBall(cv);
-  bk.state='play';
+  initBricks(cv); resetBall(cv); bk.state='play';
 }
 
 function drawDither(ctx,W,H){
@@ -483,41 +567,37 @@ function gameLoop(){
   if(bk.state==='title'){
     ctx.fillStyle='#000'; ctx.textAlign='center';
     ctx.font=`bold ${Math.round(W*0.06)}px VT323,monospace`;
-    ctx.fillText('BLOCK KUZUSHI', W/2, H*0.35);
+    ctx.fillText('BLOCK KUZUSHI',W/2,H*0.35);
     ctx.font=`${Math.round(W*0.04)}px VT323,monospace`;
-    ctx.fillText(`HI: ${bk.hi}`, W/2, H*0.5);
+    ctx.fillText('HI: '+bk.hi,W/2,H*0.5);
     if(Math.floor(Date.now()/600)%2)
-      ctx.fillText('クリック or SPACE でスタート', W/2, H*0.68);
-    ctx.textAlign='left';
-    drawDither(ctx,W,H);
+      ctx.fillText('クリック or SPACE でスタート',W/2,H*0.68);
+    ctx.textAlign='left'; drawDither(ctx,W,H);
   } else if(bk.state==='play'){
-    update(W,H); render(ctx,W,H);
+    updateGame(W,H); renderGame(ctx,W,H);
   } else {
     ctx.fillStyle='#000'; ctx.textAlign='center';
     ctx.font=`bold ${Math.round(W*0.07)}px VT323,monospace`;
-    ctx.fillText(bk.state==='over'?'GAME OVER':'STAGE CLEAR！', W/2, H*0.38);
+    ctx.fillText(bk.state==='over'?'GAME OVER':'STAGE CLEAR！',W/2,H*0.38);
     ctx.font=`${Math.round(W*0.045)}px VT323,monospace`;
-    ctx.fillText(`SCORE: ${bk.score}`, W/2, H*0.5);
-    ctx.fillText(`HI: ${bk.hi}`, W/2, H*0.6);
+    ctx.fillText('SCORE: '+bk.score,W/2,H*0.5);
+    ctx.fillText('HI: '+bk.hi,W/2,H*0.6);
     if(Math.floor(Date.now()/600)%2)
-      ctx.fillText('クリックでもういちど', W/2, H*0.73);
-    ctx.textAlign='left';
-    drawDither(ctx,W,H);
+      ctx.fillText('クリックでもういちど',W/2,H*0.73);
+    ctx.textAlign='left'; drawDither(ctx,W,H);
   }
   gameRaf=requestAnimationFrame(gameLoop);
 }
 
-function update(W,H){
+function updateGame(W,H){
   const b=bk.ball, p=bk.pad;
   if(bk.keys['ArrowLeft']||bk.keys['a']) p.x=Math.max(0,p.x-p.spd);
   if(bk.keys['ArrowRight']||bk.keys['d']) p.x=Math.min(W-p.w,p.x+p.spd);
   if(bk.mouse!==null) p.x=Math.max(0,Math.min(W-p.w,bk.mouse-p.w/2));
-
   b.x+=b.vx; b.y+=b.vy;
   if(b.x-b.r<0){ b.x=b.r; b.vx=Math.abs(b.vx); }
   if(b.x+b.r>W){ b.x=W-b.r; b.vx=-Math.abs(b.vx); }
   if(b.y-b.r<0){ b.y=b.r; b.vy=Math.abs(b.vy); beep(660,'square',0.05,0.05); }
-
   if(b.y>H+20){
     bk.lives--;
     beep(150,'sawtooth',0.3,0.1);
@@ -526,62 +606,53 @@ function update(W,H){
       if(bk.score>bk.hi){ bk.hi=bk.score; store.set('bk_hi',bk.hi); }
       return;
     }
-    resetBall(document.getElementById('game-cv'));
-    return;
+    resetBall(document.getElementById('game-cv')); return;
   }
-
   if(b.y+b.r>p.y && b.y+b.r<p.y+p.h && b.x>p.x && b.x<p.x+p.w){
     b.vy=-Math.abs(b.vy);
     b.vx=((b.x-(p.x+p.w/2))/(p.w/2))*5;
     beep(440,'square',0.06,0.06);
   }
-
   for(const br of bk.bricks){
     if(!br.alive) continue;
-    if(b.x+b.r>br.x && b.x-b.r<br.x+br.w && b.y+b.r>br.y && b.y-b.r<br.y+br.h){
+    if(b.x+b.r>br.x&&b.x-b.r<br.x+br.w&&b.y+b.r>br.y&&b.y-b.r<br.y+br.h){
       br.alive=false; b.vy=-b.vy; bk.score+=10;
       beep(rand([523,659,784]),'square',0.05,0.05);
     }
   }
-
   if(bk.bricks.every(br=>!br.alive)){
     bk.state='clear';
     if(bk.score>bk.hi){ bk.hi=bk.score; store.set('bk_hi',bk.hi); }
   }
 }
 
-function render(ctx,W,H){
+function renderGame(ctx,W,H){
   const b=bk.ball, p=bk.pad;
   const fills=['#000','#555','#888','#bbb'];
   bk.bricks.forEach(br=>{
     if(!br.alive) return;
-    ctx.fillStyle=fills[br.row%4];
-    ctx.fillRect(br.x,br.y,br.w,br.h);
-    ctx.fillStyle='#fff';
-    ctx.fillRect(br.x+2,br.y+2,br.w-4,2);
+    ctx.fillStyle=fills[br.row%4]; ctx.fillRect(br.x,br.y,br.w,br.h);
+    ctx.fillStyle='#fff'; ctx.fillRect(br.x+2,br.y+2,br.w-4,2);
   });
-  ctx.fillStyle='#000';
-  ctx.fillRect(p.x,p.y,p.w,p.h);
-  ctx.fillStyle='#fff';
-  ctx.fillRect(p.x+2,p.y+1,p.w-4,2);
+  ctx.fillStyle='#000'; ctx.fillRect(p.x,p.y,p.w,p.h);
+  ctx.fillStyle='#fff'; ctx.fillRect(p.x+2,p.y+1,p.w-4,2);
   ctx.fillStyle='#000';
   ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
   ctx.font=`${Math.round(W*0.038)}px VT323,monospace`;
-  ctx.fillText(`SCORE ${bk.score}`,6,22);
-  ctx.textAlign='center'; ctx.fillText(`HI ${bk.hi}`,W/2,22);
+  ctx.fillText('SCORE '+bk.score,6,22);
+  ctx.textAlign='center'; ctx.fillText('HI '+bk.hi,W/2,22);
   ctx.textAlign='right'; ctx.fillText('♥'.repeat(bk.lives),W-6,22);
-  ctx.textAlign='left';
-  drawDither(ctx,W,H);
+  ctx.textAlign='left'; drawDither(ctx,W,H);
 }
 
 document.addEventListener('keydown',e=>{
   bk.keys[e.key]=true;
-  if(e.key===' ' && gameOn){ e.preventDefault(); gameAction(); }
+  if(e.key===' '&&gameOn){ e.preventDefault(); gameAction(); }
 });
 document.addEventListener('keyup',e=>{ bk.keys[e.key]=false; });
 
 const gcv=document.getElementById('game-cv');
-gcv.addEventListener('click', gameAction);
+gcv.addEventListener('click',gameAction);
 gcv.addEventListener('mousemove',e=>{
   const r=gcv.getBoundingClientRect();
   bk.mouse=(e.clientX-r.left)*(gcv.width/r.width);
@@ -601,7 +672,6 @@ function gameAction(){
   if(!gameOn) return;
   if(bk.state!=='play') initPlay(document.getElementById('game-cv'));
 }
-
 </script>
 </body>
 </html>
