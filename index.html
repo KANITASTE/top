@@ -7,9 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <style>
 
-/* =====================
-   BASE — white/black only
-   ===================== */
+/* ============ BASE — monochrome only ============ */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
 body {
@@ -20,49 +18,65 @@ body {
   flex-direction: column;
   align-items: center;
   padding: 40px 20px 60px;
-  /* monochrome cursor: arrow made of lines */
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='20'%3E%3Cpolygon points='0,0 0,16 5,11 8,18 10,17 7,10 13,10' fill='%23000' stroke='%23fff' stroke-width='1'/%3E%3C/svg%3E") 0 0, default;
 }
 
-/* =====================
-   SCENE
-   ===================== */
+/* ============ SCENE ============ */
 #scene {
   position: relative;
   width: 100%;
   max-width: 640px;
   user-select: none;
-  /* HyperCard dither border */
   outline: 2px solid #000;
   box-shadow: 4px 4px 0 #000;
 }
+#main-img { width:100%; height:auto; display:block; }
 
-#main-img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* =====================
-   HOTSPOTS
-   ===================== */
+/* ============ HOTSPOTS ============ */
 .spot {
   position: absolute;
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ctext y='16' font-size='16' fill='%23000'%3E%2B%3C/text%3E%3C/svg%3E") 10 10, crosshair;
 }
+#spot-face    { top:14%; left:50%; width:30%; height:30%; border-radius:50%; }
+#spot-cat     { top:54%; left:58%; width:22%; height:26%; }
+#spot-tv      { top:24%; left:12%; width:24%; height:30%; }
+#spot-fami    { top:62%; left:2%;  width:22%; height:18%; }
+#spot-speakerL{ top:6%;  left:6%;  width:10%; height:16%; border-radius:50%; }
+#spot-mikan   { top:50%; left:35%; width:20%; height:18%; }
+#spot-disco   { top:50%; left:59%; width:14%; height:8%; }
+#spot-kotatsu { top:76%; left:24%; width:42%; height:18%; }
 
-#spot-face    { top:14%; left:52%; width:30%; height:28%; border-radius:50%; }
-#spot-cat     { top:52%; left:63%; width:22%; height:34%; }
-#spot-tv      { top:17%; left:14%; width:26%; height:37%; }
-#spot-fami    { top:68%; left:0%;  width:32%; height:24%; }
-#spot-port    { top:2%;  left:0%;  width:16%; height:30%; border-radius:50%; }
-#spot-mikan   { top:50%; left:33%; width:20%; height:16%; }
-#spot-disco   { top:46%; left:61%; width:18%; height:10%; }
-#spot-kotatsu { top:75%; left:28%; width:42%; height:18%; }
+/* ============ EVENT SPRITES (from event illustration) ============ */
+/* Hand reaching for fruit */
+#hand-sprite {
+  position: absolute;
+  top: 42.3%; left: 43.3%;
+  width: 14.8%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 14;
+  transform: translate(45%, 25%);
+}
+#hand-sprite img { width:100%; height:auto; display:block; }
 
-/* =====================
-   SPEECH BUBBLE — HyperCard style
-   ===================== */
+/* Angry cat — clipped container so it rises out of the kotatsu */
+#cat-clip {
+  position: absolute;
+  top: 72.4%; left: 46.7%;
+  width: 18.0%;
+  height: 19.5%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 14;
+}
+#cat-sprite {
+  width: 100%;
+  height: auto;
+  display: block;
+  transform: translateY(105%);
+}
+
+/* ============ SPEECH BUBBLE ============ */
 #bubble {
   position: absolute;
   background: #fff;
@@ -73,65 +87,18 @@ body {
   pointer-events: none;
   display: none;
   z-index: 20;
-  /* pixel shadow */
   box-shadow: 2px 2px 0 #000;
-  image-rendering: pixelated;
 }
 #bubble::after {
-  content:'';
-  position:absolute;
-  bottom:-10px; left:12px;
-  border:8px solid transparent;
-  border-top-color:#000;
+  content:''; position:absolute; bottom:-10px; left:12px;
+  border:8px solid transparent; border-top-color:#000;
 }
 #bubble::before {
-  content:'';
-  position:absolute;
-  bottom:-7px; left:14px;
-  border:6px solid transparent;
-  border-top-color:#fff;
-  z-index:1;
+  content:''; position:absolute; bottom:-7px; left:14px;
+  border:6px solid transparent; border-top-color:#fff; z-index:1;
 }
 
-/* =====================
-   TV CANVAS
-   ===================== */
-#tv-layer {
-  position: absolute;
-  background: #000;
-  overflow: hidden;
-  pointer-events: none;
-  display: none;
-}
-#tv-cv { display:block; width:100%; height:100%; }
-
-/* =====================
-   MIKAN HAND ANIMATION
-   SVG hand reaches in from left, grabs mikan, retreats
-   ===================== */
-#mikan-anim {
-  position: absolute;
-  pointer-events: none;
-  display: none;
-  z-index: 15;
-  overflow: visible;
-}
-
-/* =====================
-   KOTATSU CAT — pops out from under futon
-   ===================== */
-#kotatsu-cat {
-  position: absolute;
-  pointer-events: none;
-  display: none;
-  z-index: 15;
-  overflow: visible;
-}
-
-/* =====================
-   BREAKOUT OVERLAY
-   full size over illustration
-   ===================== */
+/* ============ BREAKOUT — full-size overlay ============ */
 #game-overlay {
   position: absolute;
   inset: 0;
@@ -141,72 +108,40 @@ body {
   flex-direction: column;
 }
 #game-overlay.active { display: flex; }
-
 #game-topbar {
-  height: 28px;
-  background: #000;
-  color: #fff;
-  font-family: 'VT323', monospace;
+  height: 28px; background: #000; color: #fff;
   font-size: 18px;
-  display: flex;
-  align-items: center;
-  padding: 0 8px;
-  justify-content: space-between;
-  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 8px; flex-shrink: 0;
 }
 #game-topbar button {
-  background: none; border: 1px solid #fff;
-  color: #fff; font-family: 'VT323', monospace;
-  font-size: 16px; cursor: pointer; padding: 0 6px;
+  background: none; border: 1px solid #fff; color: #fff;
+  font-family: 'VT323', monospace; font-size: 16px;
+  cursor: pointer; padding: 0 6px;
 }
-#game-cv {
-  flex: 1;
-  display: block;
-  width: 100%;
-  background: #fff;
-  image-rendering: pixelated;
-}
+#game-cv { flex: 1; display: block; width: 100%; background: #fff; }
 
-/* =====================
-   FLASH OVERLAY
-   ===================== */
+/* ============ FLASH ============ */
 #flash {
-  position: fixed; inset:0;
-  background: #fff;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 100;
+  position: fixed; inset: 0;
+  background: #fff; opacity: 0;
+  pointer-events: none; z-index: 100;
   transition: opacity 0.3s;
 }
 
-/* =====================
-   INFO AREA
-   ===================== */
-#info {
-  width: 100%;
-  max-width: 640px;
-  margin-top: 24px;
-  padding: 0 4px;
-}
-.years {
-  font-size: clamp(13px, 2.5vw, 17px);
-  color: #888;
-  line-height: 2.2;
-  margin-bottom: 14px;
-}
+/* ============ INFO ============ */
+#info { width: 100%; max-width: 640px; margin-top: 24px; padding: 0 4px; }
+.years { font-size: clamp(13px,2.5vw,17px); color: #888; line-height: 2.2; margin-bottom: 14px; }
 .years a { color:#888; text-decoration:none; border-bottom:1px solid #ccc; }
 .years a:hover { color:#000; border-color:#000; }
 .links { display:flex; gap:16px; flex-wrap:wrap; }
 .links a {
-  font-size: clamp(16px, 3vw, 22px);
-  color:#000; text-decoration:none;
-  border-bottom: 2px solid #000; padding-bottom:1px;
+  font-size: clamp(16px,3vw,22px); color:#000;
+  text-decoration:none; border-bottom:2px solid #000; padding-bottom:1px;
 }
 .links a:hover { background:#000; color:#fff; }
 
-@media(max-width:480px){
-  body{padding:20px 12px 48px;}
-}
+@media(max-width:480px){ body{padding:20px 12px 48px;} }
 
 </style>
 </head>
@@ -215,23 +150,18 @@ body {
 <div id="scene">
   <img src="main.jpg" alt="KANITASTE" id="main-img">
 
-  <!-- TV canvas layer -->
-  <div id="tv-layer"><canvas id="tv-cv"></canvas></div>
-
-  <!-- Mikan hand SVG animation -->
-  <svg id="mikan-anim" viewBox="0 0 100 60" preserveAspectRatio="none"></svg>
-
-  <!-- Kotatsu cat SVG animation -->
-  <svg id="kotatsu-cat" viewBox="0 0 80 80" preserveAspectRatio="none"></svg>
+  <!-- Event sprites -->
+  <div id="hand-sprite"><img src="hand.png" alt=""></div>
+  <div id="cat-clip"><img src="cat.png" alt="" id="cat-sprite"></div>
 
   <!-- Speech bubble -->
   <div id="bubble"></div>
 
-  <!-- Game overlay -->
+  <!-- Breakout -->
   <div id="game-overlay">
     <div id="game-topbar">
-      <span>■ BREAKOUT — HyperCard Edition</span>
-      <button onclick="closeGame()">× 閉じる</button>
+      <span>&#9632; BLOCK KUZUSHI</span>
+      <button onclick="closeGame()">&#10005; 閉じる</button>
     </div>
     <canvas id="game-cv"></canvas>
   </div>
@@ -241,13 +171,12 @@ body {
   <div class="spot" id="spot-cat"></div>
   <div class="spot" id="spot-tv"></div>
   <div class="spot" id="spot-fami"></div>
-  <div class="spot" id="spot-port"></div>
+  <div class="spot" id="spot-speakerL"></div>
   <div class="spot" id="spot-mikan"></div>
   <div class="spot" id="spot-disco"></div>
   <div class="spot" id="spot-kotatsu"></div>
 </div>
 
-<!-- Info -->
 <div id="info">
   <div class="years">
     1999–2000 &nbsp;<a href="#" onclick="return false">naramania</a><br>
@@ -280,176 +209,30 @@ function beep(freq, type, dur, vol){
   }catch(e){}
 }
 
-// Speech bubble
 const bubbleEl=document.getElementById('bubble');
 let bubbleTimer=null;
 function showBubble(text, spotEl){
   const sr=document.getElementById('scene').getBoundingClientRect();
   const er=spotEl.getBoundingClientRect();
-  let left=er.left-sr.left;
-  let top=er.top-sr.top-46;
-  // keep in bounds
   bubbleEl.style.display='block';
   bubbleEl.textContent=text;
   const bw=bubbleEl.offsetWidth;
-  left=Math.max(4, Math.min(left, sr.width-bw-6));
-  top=Math.max(4, top);
+  let left=Math.max(4, Math.min(er.left-sr.left, sr.width-bw-6));
+  let top=Math.max(4, er.top-sr.top-46);
   bubbleEl.style.left=left+'px';
   bubbleEl.style.top=top+'px';
   clearTimeout(bubbleTimer);
-  bubbleTimer=setTimeout(()=>{ bubbleEl.style.display='none'; }, 2600);
+  bubbleTimer=setTimeout(()=>{ bubbleEl.style.display='none'; },2600);
 }
 
 function flashWhite(){
   const f=document.getElementById('flash');
-  f.style.pointerEvents='all';
-  f.style.opacity='1';
-  setTimeout(()=>{ f.style.opacity='0'; f.style.pointerEvents='none'; }, 350);
+  f.style.pointerEvents='all'; f.style.opacity='1';
+  setTimeout(()=>{ f.style.opacity='0'; f.style.pointerEvents='none'; },350);
 }
 
 // ============================================================
-// LAYOUT SYNC — recompute pixel positions from image size
-// ============================================================
-let imgW=0, imgH=0;
-
-function syncLayout(){
-  const img=document.getElementById('main-img');
-  imgW=img.offsetWidth; imgH=img.offsetHeight;
-  if(!imgW) return;
-
-  // TV layer
-  const tvL=document.getElementById('tv-layer');
-  tvL.style.left   = (imgW*0.143)+'px';
-  tvL.style.top    = (imgH*0.215)+'px';
-  tvL.style.width  = (imgW*0.205)+'px';
-  tvL.style.height = (imgH*0.150)+'px';
-  const tc=document.getElementById('tv-cv');
-  tc.width =Math.round(imgW*0.205);
-  tc.height=Math.round(imgH*0.150);
-
-  // Mikan SVG
-  const ms=document.getElementById('mikan-anim');
-  ms.style.left  =(imgW*0.00)+'px';
-  ms.style.top   =(imgH*0.48)+'px';
-  ms.style.width =(imgW*0.55)+'px';
-  ms.style.height=(imgH*0.22)+'px';
-
-  // Kotatsu cat SVG
-  const kc=document.getElementById('kotatsu-cat');
-  kc.style.left  =(imgW*0.28)+'px';
-  kc.style.top   =(imgH*0.65)+'px';
-  kc.style.width =(imgW*0.32)+'px';
-  kc.style.height=(imgH*0.25)+'px';
-}
-
-document.getElementById('main-img').addEventListener('load', syncLayout);
-window.addEventListener('resize', syncLayout);
-if(document.getElementById('main-img').complete) syncLayout();
-
-// ============================================================
-// TV ANIMATION  (monochrome canvas)
-// ============================================================
-let tvOn=false, tvMode=0, tvRaf=null, tvF=0;
-
-// Tetris mini
-const tet={
-  board:Array(8).fill(0).map(()=>Array(5).fill(0)),
-  px:1, py:0,
-  step(){
-    this.py++;
-    if(this.py>6){
-      const y=Math.min(7,this.py-1);
-      this.board[y][this.px]=1;
-      if(this.px+1<5) this.board[y][this.px+1]=1;
-      this.board=this.board.filter(r=>!r.every(Boolean));
-      while(this.board.length<8) this.board.unshift(Array(5).fill(0));
-      this.py=0; this.px=Math.floor(Math.random()*3);
-    }
-  }
-};
-
-function drawTV(){
-  const cv=document.getElementById('tv-cv');
-  const ctx=cv.getContext('2d');
-  const W=cv.width, H=cv.height;
-  tvF++;
-
-  if(tvMode===0){
-    // Tetris — white on black pixel art
-    ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
-    const cw=W/5, ch=H/8;
-    // board
-    ctx.fillStyle='#555';
-    tet.board.forEach((row,y)=>row.forEach((c,x)=>{ if(c) ctx.fillRect(x*cw+1,y*ch+1,cw-2,ch-2); }));
-    // falling piece — dithered white
-    ctx.fillStyle='#fff';
-    ctx.fillRect(tet.px*cw+1, tet.py*ch+1, cw-2, ch-2);
-    if(tet.px+1<5) ctx.fillRect((tet.px+1)*cw+1, tet.py*ch+1, cw-2, ch-2);
-    // scanlines
-    ctx.fillStyle='rgba(0,0,0,0.15)';
-    for(let y=0;y<H;y+=2) ctx.fillRect(0,y,W,1);
-    if(tvF%18===0) tet.step();
-
-  } else if(tvMode===1){
-    // City / UFO — wireframe monochrome
-    ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
-    // stars
-    ctx.fillStyle='#fff';
-    for(let i=0;i<20;i++) ctx.fillRect((i*37+tvF)%W,(i*23)%H,1,1);
-    // buildings outline
-    [0.5,0.7,0.4,0.6,0.8,0.45,0.65].forEach((h,i)=>{
-      ctx.strokeStyle='#fff'; ctx.lineWidth=1;
-      const bw=W/7-1;
-      ctx.strokeRect(i*(W/7), H-H*h, bw, H*h);
-    });
-    // UFO — pixel art style
-    const ux=(tvF*1.3)%(W+24)-12, uy=H*0.18+Math.sin(tvF*0.07)*5;
-    ctx.strokeStyle='#fff'; ctx.lineWidth=1;
-    // body
-    ctx.beginPath();
-    ctx.moveTo(ux-10,uy); ctx.lineTo(ux-6,uy-4); ctx.lineTo(ux+6,uy-4); ctx.lineTo(ux+10,uy);
-    ctx.lineTo(ux+6,uy+3); ctx.lineTo(ux-6,uy+3); ctx.closePath(); ctx.stroke();
-    // dome
-    ctx.beginPath(); ctx.arc(ux,uy-4,4,Math.PI,0); ctx.stroke();
-    // beam dots
-    if(tvF%4<2){ ctx.fillStyle='#fff'; ctx.fillRect(ux-1,uy+3,2,2); }
-    // scanlines
-    ctx.fillStyle='rgba(0,0,0,0.2)';
-    for(let y=0;y<H;y+=2) ctx.fillRect(0,y,W,1);
-
-  } else {
-    // Static noise — classic TV off
-    const id=ctx.createImageData(W,H);
-    for(let i=0;i<id.data.length;i+=4){
-      const v=Math.random()>0.5?255:0;
-      id.data[i]=id.data[i+1]=id.data[i+2]=v; id.data[i+3]=255;
-    }
-    ctx.putImageData(id,0,0);
-    // "NO SIGNAL" text
-    ctx.fillStyle='#fff';
-    ctx.font=`bold ${Math.max(8,W*0.13)}px VT323,monospace`;
-    ctx.fillText('NO SIGNAL',W*0.05,H*0.55);
-  }
-
-  tvRaf=requestAnimationFrame(drawTV);
-}
-
-document.getElementById('spot-tv').addEventListener('click',function(){
-  if(!tvOn){
-    tvOn=true;
-    document.getElementById('tv-layer').style.display='block';
-    beep(120,'square',0.15,0.1);
-    drawTV();
-    showBubble('カチッ…', this);
-  } else {
-    tvMode=(tvMode+1)%3;
-    showBubble(['テトリス中…','UFO発見！','ザーッ…'][tvMode], this);
-    beep([220,440,80][tvMode],'square',0.1,0.07);
-  }
-});
-
-// ============================================================
-// FACE  — dialogue
+// FACE — dialogue
 // ============================================================
 const faceLines=[
   'ん〜……こんにちはだねぇ〜！',
@@ -467,11 +250,10 @@ document.getElementById('spot-face').addEventListener('click',function(){
 });
 
 // ============================================================
-// CAT — meow / angry shake (keep original feature)
+// LAP CAT — meow / 5-click angry shake (kept)
 // ============================================================
 const meows=['にゃー！','みゃー♪','ふにゃ〜','にゃん！','みゅー？'];
 let catClicks=0, catTimer=null;
-
 document.getElementById('spot-cat').addEventListener('click',function(){
   catClicks++;
   clearTimeout(catTimer);
@@ -480,7 +262,6 @@ document.getElementById('spot-cat').addEventListener('click',function(){
   if(catClicks>=5){
     beep(200,'sawtooth',0.5,0.2);
     showBubble('シャーーー！！', this);
-    // shake scene
     const scene=document.getElementById('scene');
     let n=0;
     const sh=setInterval(()=>{
@@ -494,225 +275,109 @@ document.getElementById('spot-cat').addEventListener('click',function(){
 });
 
 // ============================================================
-// MIKAN — hand reaches in (SVG animation, monochrome)
+// TV — sound + bubble only (no overlay)
 // ============================================================
-let mikanBusy=false;
+const tvLines=['ジー……','（テトリスがやりたいなぁ）','ザザッ…','（UFO特集やってる）'];
+let tvIdx=0;
+document.getElementById('spot-tv').addEventListener('click',function(){
+  beep(120,'square',0.12,0.08);
+  showBubble(tvLines[tvIdx++%tvLines.length], this);
+});
 
-function playMikanAnim(){
-  if(mikanBusy) return;
-  mikanBusy=true;
-  const svg=document.getElementById('mikan-anim');
-  svg.style.display='block';
-  svg.innerHTML='';
+// ============================================================
+// MIKAN HAND EVENT — sprite from event illustration
+// slides in → grabs → retreats
+// ============================================================
+let handBusy=false;
 
-  // Hand drawn in SVG — matches illustration style (thick outline, no fill)
-  // starts off-left, slides in, grabs, retreats
-  const hand=document.createElementNS('http://www.w3.org/2000/svg','g');
-  hand.setAttribute('stroke','#000');
-  hand.setAttribute('stroke-width','3');
-  hand.setAttribute('fill','none');
-  hand.setAttribute('stroke-linecap','round');
-  hand.setAttribute('stroke-linejoin','round');
+function playHand(){
+  if(handBusy) return;
+  handBusy=true;
+  const el=document.getElementById('hand-sprite');
 
-  // Arm
-  const arm=document.createElementNS('http://www.w3.org/2000/svg','path');
-  arm.setAttribute('d','M-10,35 Q10,30 25,28 Q40,26 50,30');
-  arm.setAttribute('stroke-width','6');
-  hand.appendChild(arm);
-  // Fingers (4 lines)
-  [
-    'M50,30 Q55,22 52,16',
-    'M50,30 Q58,23 57,16',
-    'M50,30 Q60,27 61,20',
-    'M50,30 Q59,33 60,38',
-  ].forEach(d=>{
-    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
-    p.setAttribute('d',d); p.setAttribute('stroke-width','2.5');
-    hand.appendChild(p);
+  // Phase 1: slide in from lower-right (arm direction)
+  el.style.transition='none';
+  el.style.transform='translate(45%, 25%)';
+  el.style.opacity='0';
+
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      el.style.transition='transform 0.9s cubic-bezier(0.22,1,0.36,1), opacity 0.5s';
+      el.style.transform='translate(0,0)';
+      el.style.opacity='1';
+    });
   });
-  // Mikan circle being grabbed
-  const mikan=document.createElementNS('http://www.w3.org/2000/svg','circle');
-  mikan.setAttribute('cx','56'); mikan.setAttribute('cy','24');
-  mikan.setAttribute('r','8');
-  mikan.setAttribute('stroke-width','2'); mikan.setAttribute('fill','none');
-  hand.appendChild(mikan);
-  // Leaf
-  const leaf=document.createElementNS('http://www.w3.org/2000/svg','path');
-  leaf.setAttribute('d','M56,16 Q59,10 63,11');
-  leaf.setAttribute('stroke-width','1.5');
-  hand.appendChild(leaf);
 
-  svg.appendChild(hand);
+  beep(180,'sine',0.3,0.05);
 
-  // Animate: slide in → pause → slide out
-  let t=0;
-  const SLIDE_IN=40, HOLD=30, SLIDE_OUT=35;
+  // Phase 2: grab jiggle
+  setTimeout(()=>{
+    el.style.transition='transform 0.1s';
+    let n=0;
+    const jiggle=setInterval(()=>{
+      el.style.transform=n++%2?'translate(1.5%,-1%)':'translate(-1%,0.5%)';
+      if(n>5){
+        clearInterval(jiggle);
+        el.style.transform='translate(0,0)';
+      }
+    },100);
+    beep(240,'sawtooth',0.15,0.07);
+  },1000);
 
-  function step(){
-    if(t<=SLIDE_IN){
-      const pct=t/SLIDE_IN;
-      const ease=pct<0.5?2*pct*pct:1-Math.pow(-2*pct+2,2)/2;
-      const tx=-100+ease*100;
-      hand.setAttribute('transform',`translate(${tx},0)`);
-    } else if(t<=SLIDE_IN+HOLD){
-      hand.setAttribute('transform','translate(0,0)');
-      // jiggle
-      if(t%4<2) hand.setAttribute('transform','translate(2,-1)');
-    } else if(t<=SLIDE_IN+HOLD+SLIDE_OUT){
-      const pct=(t-SLIDE_IN-HOLD)/SLIDE_OUT;
-      const ease=pct*pct;
-      const tx=ease*(-110);
-      hand.setAttribute('transform',`translate(${tx},0)`);
-    } else {
-      svg.style.display='none';
-      svg.innerHTML='';
-      mikanBusy=false;
-      return;
-    }
-    t++;
-    requestAnimationFrame(step);
-  }
-  step();
+  // Phase 3: retreat
+  setTimeout(()=>{
+    el.style.transition='transform 0.7s cubic-bezier(0.55,0,1,0.45), opacity 0.5s';
+    el.style.transform='translate(50%, 30%)';
+    el.style.opacity='0';
+  },2200);
 
-  beep(300,'sine',0.1,0.06);
-  // sound of snatching
-  setTimeout(()=>beep(200,'sawtooth',0.15,0.08), 700);
+  setTimeout(()=>{ handBusy=false; },3100);
 }
 
 document.getElementById('spot-mikan').addEventListener('click',function(){
   showBubble('！？', this);
-  playMikanAnim();
+  playHand();
 });
 
-// Random mikan event (20–60s)
-function scheduleMikan(){
-  setTimeout(()=>{
-    playMikanAnim();
-    scheduleMikan();
-  }, 20000+Math.random()*40000);
+// Random auto event (20–60s)
+function scheduleHand(){
+  setTimeout(()=>{ playHand(); scheduleHand(); }, 20000+Math.random()*40000);
 }
-scheduleMikan();
+scheduleHand();
 
 // ============================================================
-// KOTATSU — angry cat pops out from under futon
+// KOTATSU CAT EVENT — sprite rises out of the futon
 // ============================================================
-let kotatsiBusy=false;
+let kcatBusy=false;
 
 function playKotatsuCat(){
-  if(kotatsiBusy) return;
-  kotatsiBusy=true;
-  const svg=document.getElementById('kotatsu-cat');
-  svg.style.display='block';
-  svg.innerHTML='';
+  if(kcatBusy) return;
+  kcatBusy=true;
+  const img=document.getElementById('cat-sprite');
 
-  // Angry cat face — drawn to match illustration style
-  const cat=document.createElementNS('http://www.w3.org/2000/svg','g');
-  cat.setAttribute('stroke','#000');
-  cat.setAttribute('stroke-width','2.5');
-  cat.setAttribute('fill','#fff');
-  cat.setAttribute('stroke-linecap','round');
-
-  // Head circle
-  const head=document.createElementNS('http://www.w3.org/2000/svg','circle');
-  head.setAttribute('cx','40'); head.setAttribute('cy','45');
-  head.setAttribute('r','28');
-  cat.appendChild(head);
-
-  // Ears (angry — pressed down)
-  const earL=document.createElementNS('http://www.w3.org/2000/svg','polygon');
-  earL.setAttribute('points','14,24 22,10 30,24');
-  earL.setAttribute('fill','#fff');
-  cat.appendChild(earL);
-  const earR=document.createElementNS('http://www.w3.org/2000/svg','polygon');
-  earR.setAttribute('points','50,24 58,10 66,24');
-  earR.setAttribute('fill','#fff');
-  cat.appendChild(earR);
-
-  // Eyes — angry slant
-  const eyeL=document.createElementNS('http://www.w3.org/2000/svg','path');
-  eyeL.setAttribute('d','M24,40 Q28,36 32,40'); eyeL.setAttribute('fill','none');
-  cat.appendChild(eyeL);
-  const eyeR=document.createElementNS('http://www.w3.org/2000/svg','path');
-  eyeR.setAttribute('d','M48,40 Q52,36 56,40'); eyeR.setAttribute('fill','none');
-  cat.appendChild(eyeR);
-
-  // Pupils — narrow
-  const pupL=document.createElementNS('http://www.w3.org/2000/svg','ellipse');
-  pupL.setAttribute('cx','28'); pupL.setAttribute('cy','41');
-  pupL.setAttribute('rx','1.5'); pupL.setAttribute('ry','3');
-  pupL.setAttribute('fill','#000');
-  cat.appendChild(pupL);
-  const pupR=document.createElementNS('http://www.w3.org/2000/svg','ellipse');
-  pupR.setAttribute('cx','52'); pupR.setAttribute('cy','41');
-  pupR.setAttribute('rx','1.5'); pupR.setAttribute('ry','3');
-  pupR.setAttribute('fill','#000');
-  cat.appendChild(pupR);
-
-  // Nose
-  const nose=document.createElementNS('http://www.w3.org/2000/svg','polygon');
-  nose.setAttribute('points','38,48 40,46 42,48 40,50');
-  nose.setAttribute('fill','#000'); nose.setAttribute('stroke','none');
-  cat.appendChild(nose);
-
-  // Mouth — angry W shape
-  const mouth=document.createElementNS('http://www.w3.org/2000/svg','path');
-  mouth.setAttribute('d','M30,56 Q34,52 38,56 Q40,58 42,56 Q46,52 50,56');
-  mouth.setAttribute('fill','none');
-  cat.appendChild(mouth);
-
-  // Whiskers
-  ['M10,46 L26,48','M10,50 L26,50','M54,48 L70,46','M54,50 L70,50'].forEach(d=>{
-    const w=document.createElementNS('http://www.w3.org/2000/svg','path');
-    w.setAttribute('d',d); w.setAttribute('stroke-width','1.5');
-    cat.appendChild(w);
-  });
-
-  // Futon edge covering bottom
-  const futon=document.createElementNS('http://www.w3.org/2000/svg','rect');
-  futon.setAttribute('x','0'); futon.setAttribute('y','62');
-  futon.setAttribute('width','80'); futon.setAttribute('height','18');
-  futon.setAttribute('fill','#fff'); futon.setAttribute('stroke','#000');
-  futon.setAttribute('stroke-width','2');
-  cat.appendChild(futon);
-  // futon wavy line
-  const wave=document.createElementNS('http://www.w3.org/2000/svg','path');
-  wave.setAttribute('d','M0,62 Q10,58 20,62 Q30,66 40,62 Q50,58 60,62 Q70,66 80,62');
-  wave.setAttribute('fill','none'); wave.setAttribute('stroke','#000'); wave.setAttribute('stroke-width','1.5');
-  cat.appendChild(wave);
-
-  svg.appendChild(cat);
-
-  // Animate: pop up from bottom, hover, retreat
-  let t=0;
-  const POP=25, HOLD=50, DOWN=20;
-  const startY=80;
-
-  function step(){
-    if(t<=POP){
-      const pct=t/POP;
-      const ease=1-Math.pow(1-pct,3);
-      cat.setAttribute('transform',`translate(0,${startY*(1-ease)})`);
-    } else if(t<=POP+HOLD){
-      // subtle wobble
-      const wobble=Math.sin(t*0.4)*2;
-      cat.setAttribute('transform',`translate(${wobble},0)`);
-    } else if(t<=POP+HOLD+DOWN){
-      const pct=(t-POP-HOLD)/DOWN;
-      const ease=pct*pct;
-      cat.setAttribute('transform',`translate(0,${startY*ease})`);
-    } else {
-      svg.style.display='none';
-      svg.innerHTML='';
-      kotatsiBusy=false;
-      return;
-    }
-    t++;
-    requestAnimationFrame(step);
-  }
-  step();
-
+  // Rise
+  img.style.transition='transform 0.45s cubic-bezier(0.34,1.4,0.64,1)';
+  img.style.transform='translateY(0)';
   beep(200,'sawtooth',0.4,0.15);
-  setTimeout(()=>beep(180,'sawtooth',0.2,0.1),200);
+  setTimeout(()=>beep(170,'sawtooth',0.25,0.1),180);
+
+  // Angry wobble
+  setTimeout(()=>{
+    img.style.transition='transform 0.08s';
+    let n=0;
+    const wob=setInterval(()=>{
+      img.style.transform=`translateY(0) translateX(${n%2?2:-2}%)`;
+      if(++n>7){ clearInterval(wob); img.style.transform='translateY(0)'; }
+    },80);
+  },500);
+
+  // Sink back
+  setTimeout(()=>{
+    img.style.transition='transform 0.5s cubic-bezier(0.55,0,1,0.45)';
+    img.style.transform='translateY(105%)';
+  },2400);
+
+  setTimeout(()=>{ kcatBusy=false; },3000);
 }
 
 document.getElementById('spot-kotatsu').addEventListener('click',function(){
@@ -721,21 +386,21 @@ document.getElementById('spot-kotatsu').addEventListener('click',function(){
 });
 
 // ============================================================
-// PORTHOLE — UFO flash (white flash, monochrome)
+// SPEAKER (round) — UFO white flash event
 // ============================================================
 let ufoReady=true;
-document.getElementById('spot-port').addEventListener('click',function(){
-  if(!ufoReady){ showBubble('もういない…', this); return; }
+document.getElementById('spot-speakerL').addEventListener('click',function(){
+  if(!ufoReady){ showBubble('……シーン', this); return; }
   ufoReady=false;
-  showBubble('🛸 ！！！', this);
-  beep(150,'sawtooth',1.5,0.12);
+  showBubble('！！！', this);
+  beep(150,'sawtooth',1.2,0.12);
   setTimeout(()=>{
     flashWhite();
     setTimeout(()=>{
-      showBubble('…消えた', document.getElementById('spot-port'));
+      showBubble('…なにかが通り過ぎた', document.getElementById('spot-speakerL'));
       ufoReady=true;
     },400);
-  },600);
+  },500);
 });
 
 // ============================================================
@@ -750,7 +415,7 @@ document.getElementById('spot-disco').addEventListener('click',function(){
 });
 
 // ============================================================
-// FAMICOM — launch breakout
+// FAMICOM — breakout
 // ============================================================
 document.getElementById('spot-fami').addEventListener('click',function(){
   beep(523,'square',0.12,0.07);
@@ -758,33 +423,25 @@ document.getElementById('spot-fami').addEventListener('click',function(){
 });
 
 // ============================================================
-// BREAKOUT — full overlay on illustration
+// BREAKOUT — monochrome, full overlay
 // ============================================================
 let gameRaf=null, gameOn=false;
-
 const bk={
   ball:{x:0,y:0,vx:3,vy:-4,r:5},
   pad:{x:0,y:0,w:0,h:8,spd:0},
-  bricks:[],
-  score:0, lives:3, hi:0,
-  state:'title', // title|play|over|clear
-  keys:{},
-  mouse:null,
+  bricks:[], score:0, lives:3, hi:0,
+  state:'title', keys:{}, mouse:null,
 };
 
 function openGame(){
   const ov=document.getElementById('game-overlay');
   ov.classList.add('active');
   gameOn=true;
-
-  // size canvas to match scene
   const scene=document.getElementById('scene');
   const topbar=document.getElementById('game-topbar');
   const cv=document.getElementById('game-cv');
-  const h=scene.offsetHeight - topbar.offsetHeight;
   cv.width=scene.offsetWidth;
-  cv.height=h;
-
+  cv.height=scene.offsetHeight - topbar.offsetHeight;
   bk.hi=parseInt(localStorage.getItem('bk_hi')||'0');
   bk.state='title';
   if(!gameRaf) gameLoop();
@@ -798,42 +455,36 @@ window.closeGame=function(){
 
 function initBricks(cv){
   bk.bricks=[];
-  const cols=8, rows=4;
-  const gx=6, gy=2;
+  const cols=8, rows=4, gx=6, gy=2;
   const bw=(cv.width-gx*(cols+1))/cols;
-  const bh=Math.min(16, (cv.height*0.3)/rows);
-  const offY=32;
-  for(let r=0;r<rows;r++){
-    for(let c=0;c<cols;c++){
-      bk.bricks.push({
-        x:gx+c*(bw+gx), y:offY+r*(bh+gy),
-        w:bw, h:bh, alive:true,
-        // dither pattern row index
-        row:r
-      });
-    }
-  }
+  const bh=Math.min(16,(cv.height*0.3)/rows);
+  for(let r=0;r<rows;r++)
+    for(let c=0;c<cols;c++)
+      bk.bricks.push({x:gx+c*(bw+gx), y:32+r*(bh+gy), w:bw, h:bh, alive:true, row:r});
 }
 
 function resetBall(cv){
-  bk.ball.x=cv.width/2;
-  bk.ball.y=cv.height-60;
-  const angle=(Math.random()*0.6+0.2)*(Math.random()<0.5?1:-1);
-  const spd=Math.min(cv.width,cv.height)*0.008+3;
-  bk.ball.vx=Math.cos(angle)*spd;
-  bk.ball.vy=-Math.abs(Math.sin(angle)*spd)-2;
+  bk.ball.x=cv.width/2; bk.ball.y=cv.height-60;
+  const a=(Math.random()*0.6+0.2)*(Math.random()<0.5?1:-1);
+  const s=Math.min(cv.width,cv.height)*0.008+3;
+  bk.ball.vx=Math.cos(a)*s;
+  bk.ball.vy=-Math.abs(Math.sin(a)*s)-2;
 }
 
 function initPlay(cv){
-  bk.pad.w=cv.width*0.18;
-  bk.pad.h=8;
+  bk.pad.w=cv.width*0.18; bk.pad.h=8;
   bk.pad.spd=cv.width*0.015;
   bk.pad.x=cv.width/2-bk.pad.w/2;
   bk.pad.y=cv.height-24;
   bk.score=0; bk.lives=3;
-  initBricks(cv);
-  resetBall(cv);
+  initBricks(cv); resetBall(cv);
   bk.state='play';
+}
+
+function drawDither(ctx,W,H){
+  ctx.fillStyle='#000';
+  for(let x=0;x<W;x+=4){ ctx.fillRect(x,0,2,3); ctx.fillRect(x,H-3,2,3); }
+  for(let y=0;y<H;y+=4){ ctx.fillRect(0,y,3,2); ctx.fillRect(W-3,y,3,2); }
 }
 
 function gameLoop(){
@@ -841,85 +492,46 @@ function gameLoop(){
   if(!cv){ gameRaf=null; return; }
   const ctx=cv.getContext('2d');
   const W=cv.width, H=cv.height;
-
-  // Draw
-  ctx.fillStyle='#fff';
-  ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
 
   if(bk.state==='title'){
-    ctx.fillStyle='#000';
+    ctx.fillStyle='#000'; ctx.textAlign='center';
     ctx.font=`bold ${Math.round(W*0.06)}px VT323,monospace`;
-    ctx.textAlign='center';
     ctx.fillText('BLOCK KUZUSHI', W/2, H*0.35);
     ctx.font=`${Math.round(W*0.04)}px VT323,monospace`;
-    ctx.fillText('— HyperCard Edition —', W/2, H*0.45);
-    ctx.fillText(`HI: ${bk.hi}`, W/2, H*0.57);
-    ctx.font=`${Math.round(W*0.035)}px VT323,monospace`;
-    // blink
+    ctx.fillText(`HI: ${bk.hi}`, W/2, H*0.5);
     if(Math.floor(Date.now()/600)%2)
-      ctx.fillText('クリック or SPACE でスタート', W/2, H*0.72);
+      ctx.fillText('クリック or SPACE でスタート', W/2, H*0.68);
     ctx.textAlign='left';
-
-    // dither border
-    drawDitherBorder(ctx,W,H);
-
+    drawDither(ctx,W,H);
   } else if(bk.state==='play'){
-    update(W,H);
-    render(ctx,W,H);
-
-  } else if(bk.state==='over'){
-    ctx.fillStyle='#000';
+    update(W,H); render(ctx,W,H);
+  } else {
+    ctx.fillStyle='#000'; ctx.textAlign='center';
     ctx.font=`bold ${Math.round(W*0.07)}px VT323,monospace`;
-    ctx.textAlign='center';
-    ctx.fillText('GAME OVER', W/2, H*0.38);
+    ctx.fillText(bk.state==='over'?'GAME OVER':'STAGE CLEAR！', W/2, H*0.38);
     ctx.font=`${Math.round(W*0.045)}px VT323,monospace`;
-    ctx.fillText(`SCORE: ${bk.score}`, W/2, H*0.50);
-    ctx.fillText(`HI: ${bk.hi}`, W/2, H*0.60);
+    ctx.fillText(`SCORE: ${bk.score}`, W/2, H*0.5);
+    ctx.fillText(`HI: ${bk.hi}`, W/2, H*0.6);
     if(Math.floor(Date.now()/600)%2)
-      ctx.fillText('クリック で もういちど', W/2, H*0.73);
+      ctx.fillText('クリックでもういちど', W/2, H*0.73);
     ctx.textAlign='left';
-    drawDitherBorder(ctx,W,H);
-
-  } else if(bk.state==='clear'){
-    ctx.fillStyle='#000';
-    ctx.font=`bold ${Math.round(W*0.06)}px VT323,monospace`;
-    ctx.textAlign='center';
-    ctx.fillText('STAGE CLEAR！', W/2, H*0.38);
-    ctx.font=`${Math.round(W*0.04)}px VT323,monospace`;
-    ctx.fillText(`SCORE: ${bk.score}`, W/2, H*0.50);
-    if(Math.floor(Date.now()/600)%2)
-      ctx.fillText('クリック で つぎへ', W/2, H*0.65);
-    ctx.textAlign='left';
-    drawDitherBorder(ctx,W,H);
+    drawDither(ctx,W,H);
   }
-
   gameRaf=requestAnimationFrame(gameLoop);
-}
-
-// Dither border (HyperCard aesthetic)
-function drawDitherBorder(ctx,W,H){
-  ctx.fillStyle='#000';
-  for(let x=0;x<W;x+=4){ ctx.fillRect(x,0,2,3); ctx.fillRect(x,H-3,2,3); }
-  for(let y=0;y<H;y+=4){ ctx.fillRect(0,y,3,2); ctx.fillRect(W-3,y,3,2); }
 }
 
 function update(W,H){
   const b=bk.ball, p=bk.pad;
-
-  // Paddle input
   if(bk.keys['ArrowLeft']||bk.keys['a']) p.x=Math.max(0,p.x-p.spd);
   if(bk.keys['ArrowRight']||bk.keys['d']) p.x=Math.min(W-p.w,p.x+p.spd);
-  if(bk.mouse!==null){ p.x=Math.max(0,Math.min(W-p.w, bk.mouse-p.w/2)); }
+  if(bk.mouse!==null) p.x=Math.max(0,Math.min(W-p.w,bk.mouse-p.w/2));
 
-  // Move ball
   b.x+=b.vx; b.y+=b.vy;
-
-  // Wall bounce
   if(b.x-b.r<0){ b.x=b.r; b.vx=Math.abs(b.vx); }
   if(b.x+b.r>W){ b.x=W-b.r; b.vx=-Math.abs(b.vx); }
   if(b.y-b.r<0){ b.y=b.r; b.vy=Math.abs(b.vy); beep(660,'square',0.05,0.05); }
 
-  // Ball lost
   if(b.y>H+20){
     bk.lives--;
     beep(150,'sawtooth',0.3,0.1);
@@ -932,26 +544,21 @@ function update(W,H){
     return;
   }
 
-  // Paddle collision
   if(b.y+b.r>p.y && b.y+b.r<p.y+p.h && b.x>p.x && b.x<p.x+p.w){
     b.vy=-Math.abs(b.vy);
     b.vx=((b.x-(p.x+p.w/2))/(p.w/2))*5;
     beep(440,'square',0.06,0.06);
   }
 
-  // Brick collision
-  for(const bk_ of bk.bricks){
-    if(!bk_.alive) continue;
-    if(b.x+b.r>bk_.x && b.x-b.r<bk_.x+bk_.w && b.y+b.r>bk_.y && b.y-b.r<bk_.y+bk_.h){
-      bk_.alive=false;
-      b.vy=-b.vy;
-      bk.score+=10;
+  for(const br of bk.bricks){
+    if(!br.alive) continue;
+    if(b.x+b.r>br.x && b.x-b.r<br.x+br.w && b.y+b.r>br.y && b.y-b.r<br.y+br.h){
+      br.alive=false; b.vy=-b.vy; bk.score+=10;
       beep(rand([523,659,784]),'square',0.05,0.05);
     }
   }
 
-  // Clear?
-  if(bk.bricks.every(bk_=>!bk_.alive)){
+  if(bk.bricks.every(br=>!br.alive)){
     bk.state='clear';
     if(bk.score>bk.hi){ bk.hi=bk.score; localStorage.setItem('bk_hi',bk.hi); }
   }
@@ -959,72 +566,54 @@ function update(W,H){
 
 function render(ctx,W,H){
   const b=bk.ball, p=bk.pad;
-
-  // Bricks — monochrome dither patterns by row
-  const fills=['#000','#555','#888','#aaa'];
-  bk.bricks.forEach(bk_=>{
-    if(!bk_.alive) return;
-    ctx.fillStyle=fills[bk_.row%fills.length];
-    ctx.fillRect(bk_.x,bk_.y,bk_.w,bk_.h);
-    // inner highlight
+  const fills=['#000','#555','#888','#bbb'];
+  bk.bricks.forEach(br=>{
+    if(!br.alive) return;
+    ctx.fillStyle=fills[br.row%4];
+    ctx.fillRect(br.x,br.y,br.w,br.h);
     ctx.fillStyle='#fff';
-    ctx.fillRect(bk_.x+2,bk_.y+2,bk_.w-4,2);
+    ctx.fillRect(br.x+2,br.y+2,br.w-4,2);
   });
-
-  // Paddle — thick black rect with white highlight
   ctx.fillStyle='#000';
   ctx.fillRect(p.x,p.y,p.w,p.h);
   ctx.fillStyle='#fff';
   ctx.fillRect(p.x+2,p.y+1,p.w-4,2);
-
-  // Ball — pixel circle
   ctx.fillStyle='#000';
-  ctx.beginPath();
-  ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
-  ctx.fill();
-
-  // HUD
-  ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
   ctx.font=`${Math.round(W*0.038)}px VT323,monospace`;
-  ctx.fillText(`SCORE ${bk.score}`, 6, 22);
-  ctx.textAlign='center';
-  ctx.fillText(`HI ${bk.hi}`, W/2, 22);
-  ctx.textAlign='right';
-  ctx.fillText('♥'.repeat(bk.lives), W-6, 22);
+  ctx.fillText(`SCORE ${bk.score}`,6,22);
+  ctx.textAlign='center'; ctx.fillText(`HI ${bk.hi}`,W/2,22);
+  ctx.textAlign='right'; ctx.fillText('♥'.repeat(bk.lives),W-6,22);
   ctx.textAlign='left';
-
-  drawDitherBorder(ctx,W,H);
+  drawDither(ctx,W,H);
 }
 
-// Game input
 document.addEventListener('keydown',e=>{
   bk.keys[e.key]=true;
-  if(e.key===' '){ e.preventDefault(); handleGameAction(); }
+  if(e.key===' '){ e.preventDefault(); gameAction(); }
 });
 document.addEventListener('keyup',e=>{ bk.keys[e.key]=false; });
 
-document.getElementById('game-cv').addEventListener('click', handleGameAction);
-document.getElementById('game-cv').addEventListener('mousemove',e=>{
-  const r=document.getElementById('game-cv').getBoundingClientRect();
-  bk.mouse=e.clientX-r.left;
+const gcv=document.getElementById('game-cv');
+gcv.addEventListener('click', gameAction);
+gcv.addEventListener('mousemove',e=>{
+  const r=gcv.getBoundingClientRect();
+  bk.mouse=(e.clientX-r.left)*(gcv.width/r.width);
 });
-document.getElementById('game-cv').addEventListener('touchmove',e=>{
+gcv.addEventListener('touchmove',e=>{
   e.preventDefault();
-  const r=document.getElementById('game-cv').getBoundingClientRect();
-  bk.mouse=e.touches[0].clientX-r.left;
+  const r=gcv.getBoundingClientRect();
+  bk.mouse=(e.touches[0].clientX-r.left)*(gcv.width/r.width);
 },{passive:false});
-document.getElementById('game-cv').addEventListener('touchstart',e=>{
-  const r=document.getElementById('game-cv').getBoundingClientRect();
-  bk.mouse=e.touches[0].clientX-r.left;
-  handleGameAction();
+gcv.addEventListener('touchstart',e=>{
+  const r=gcv.getBoundingClientRect();
+  bk.mouse=(e.touches[0].clientX-r.left)*(gcv.width/r.width);
+  gameAction();
 });
 
-function handleGameAction(){
+function gameAction(){
   if(!gameOn) return;
-  const cv=document.getElementById('game-cv');
-  if(bk.state==='title'||bk.state==='over'||bk.state==='clear'){
-    initPlay(cv);
-  }
+  if(bk.state!=='play') initPlay(document.getElementById('game-cv'));
 }
 
 </script>
