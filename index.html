@@ -1,238 +1,512 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DISCO's HyperCard World ～1993～</title>
-  <meta name="description" content="1993年のHyperCardで作られた不思議なインタラクティブ体験">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KANITASTE</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<style>
+
+/* =====================
+   BASE
+   ===================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #fff;
+  font-family: 'VT323', monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px 60px;
+  cursor: default;
+}
+
+/* =====================
+   ILLUSTRATION AREA
+   ===================== */
+#scene {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  user-select: none;
+}
+
+#scene img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* =====================
+   HOTSPOTS
+   invisible click areas
+   ===================== */
+.spot {
+  position: absolute;
+  cursor: pointer;
+  border-radius: 4px;
+  /* uncomment to debug: border: 2px solid red; */
+}
+
+/* Face */
+#spot-face   { top:16%; left:52%; width:28%; height:26%; border-radius: 50%; }
+/* Cat */
+#spot-cat    { top:54%; left:62%; width:22%; height:32%; }
+/* TV */
+#spot-tv     { top:17%; left:3%;  width:27%; height:36%; }
+/* Famicom */
+#spot-fami   { top:68%; left:0%;  width:30%; height:22%; }
+/* Left porthole */
+#spot-port   { top:2%;  left:0%;  width:10%; height:18%; border-radius:50%; }
+/* Mikan bowl */
+#spot-mikan  { top:52%; left:32%; width:20%; height:16%; }
+/* DISCO text on shirt */
+#spot-disco  { top:46%; left:60%; width:18%; height:11%; }
+/* Kotatsu */
+#spot-kotatsu{ top:76%; left:28%; width:40%; height:18%; }
+
+/* =====================
+   SPEECH BUBBLE
+   ===================== */
+#bubble {
+  position: absolute;
+  background: #fff;
+  border: 2px solid #000;
+  padding: 6px 12px;
+  font-size: clamp(14px, 3vw, 20px);
+  white-space: nowrap;
+  pointer-events: none;
+  display: none;
+  z-index: 10;
+  box-shadow: 3px 3px 0 #000;
+}
+#bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -10px; left: 14px;
+  border: 8px solid transparent;
+  border-top-color: #000;
+}
+#bubble::before {
+  content: '';
+  position: absolute;
+  bottom: -7px; left: 16px;
+  border: 6px solid transparent;
+  border-top-color: #fff;
+  z-index: 1;
+}
+
+/* =====================
+   TV MINI ANIMATION
+   shown inside tv area
+   ===================== */
+#tv-anim {
+  position: absolute;
+  top: 21%; left: 6%;
+  width: 19%; height: 14%;
+  background: #001400;
+  overflow: hidden;
+  pointer-events: none;
+  display: none;
+}
+#tv-anim canvas {
+  width: 100%; height: 100%; display: block;
+}
+
+/* =====================
+   INFO AREA (below illo)
+   ===================== */
+#info {
+  width: 100%;
+  max-width: 640px;
+  margin-top: 28px;
+  padding: 0 4px;
+}
+
+/* year line */
+.years {
+  font-size: clamp(13px, 2.5vw, 17px);
+  color: #888;
+  line-height: 2;
+  margin-bottom: 16px;
+}
+.years a {
+  color: #888;
+  text-decoration: none;
+  border-bottom: 1px solid #ccc;
+  transition: color 0.15s, border-color 0.15s;
+}
+.years a:hover { color: #000; border-color: #000; }
+
+/* links row */
+.links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.links a {
+  font-size: clamp(16px, 3vw, 22px);
+  color: #000;
+  text-decoration: none;
+  border-bottom: 2px solid #000;
+  padding-bottom: 1px;
+  transition: background 0.1s, color 0.1s;
+}
+.links a:hover {
+  background: #000;
+  color: #fff;
+}
+
+/* =====================
+   CURSOR CUSTOM
+   ===================== */
+.spot { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ctext y='20' font-size='20'%3E👆%3C/text%3E%3C/svg%3E") 4 0, pointer; }
+
+/* =====================
+   FLASH OVERLAY
+   (UFO blackout, etc.)
+   ===================== */
+#flash {
+  position: fixed; inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+  transition: opacity 0.4s;
+}
+
+/* =====================
+   RESPONSIVE
+   ===================== */
+@media (max-width: 480px) {
+  body { padding: 24px 12px 48px; }
+  .links { gap: 12px; }
+}
+
+</style>
 </head>
 <body>
 
-<!-- ============================================
-     STARTUP SCREEN
-     ============================================ -->
-<div id="startup-screen">
-  <div class="startup-mac-icon">🖥</div>
-  <div class="startup-text">HyperCard 2.2 を読み込み中...</div>
-  <div class="startup-progress">
-    <div class="startup-progress-bar" id="startup-progress-bar"></div>
+<div id="scene">
+  <img src="main.jpg" alt="KANITASTE" id="main-img">
+
+  <!-- TV canvas (shown when TV is clicked) -->
+  <div id="tv-anim"><canvas id="tv-cv"></canvas></div>
+
+  <!-- Speech bubble -->
+  <div id="bubble"></div>
+
+  <!-- Hotspots -->
+  <div class="spot" id="spot-face"></div>
+  <div class="spot" id="spot-cat"></div>
+  <div class="spot" id="spot-tv"></div>
+  <div class="spot" id="spot-fami"></div>
+  <div class="spot" id="spot-port"></div>
+  <div class="spot" id="spot-mikan"></div>
+  <div class="spot" id="spot-disco"></div>
+  <div class="spot" id="spot-kotatsu"></div>
+</div>
+
+<!-- Info area -->
+<div id="info">
+  <div class="years">
+    1999–2000 &nbsp;<a href="#" onclick="return false">naramania</a><br>
+    2003–2007 &nbsp;<a href="#" onclick="return false">Queen's mahjong table</a><br>
+    2007–2019 &nbsp;<a href="#" onclick="return false">kaniaji</a>
   </div>
-  <div style="margin-top:14px; font-size:12px; color:#888; font-family:monospace;">
-    System 7.1 &bull; HyperCard 2.2 &bull; &copy;1993
+  <div class="links">
+    <a href="https://twitter.com/" target="_blank" rel="noopener">→ twitter</a>
+    <a href="#" onclick="return false">→ works</a>
   </div>
 </div>
 
-<!-- ============================================
-     MAIN CONTAINER
-     ============================================ -->
-<div id="main-container">
+<!-- Flash overlay -->
+<div id="flash"></div>
 
-  <!-- MAC MENU BAR -->
-  <div id="menu-bar">
-    <span class="menu-apple" title="このコンピュータについて">&#63743;</span>
-    <span class="menu-item" data-menu="File">File</span>
-    <span class="menu-item" data-menu="Edit">Edit</span>
-    <span class="menu-item" data-menu="Go">Go</span>
-    <span class="menu-item" data-menu="Tools">Tools</span>
-    <span class="menu-item" onclick="document.getElementById('about-modal').style.display='block'; document.getElementById('about-modal').style.zIndex='700'">About</span>
-    <span class="menu-clock" id="menu-clock">--:--</span>
-  </div>
+<script>
+// =============================================
+// UTILITIES
+// =============================================
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-  <!-- SCENE WRAPPER -->
-  <div id="scene-wrapper">
-    <div id="scene-image-container">
+function beep(freq, type, dur, vol) {
+  try {
+    const ac   = new (window.AudioContext || window.webkitAudioContext)();
+    const osc  = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol || 0.1, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+    osc.start(); osc.stop(ac.currentTime + dur);
+  } catch(e) {}
+}
 
-      <!-- MAIN IMAGE -->
-      <img id="main-image" src="assets/images/main.jpg" alt="DISCOちゃんのお部屋" draggable="false">
+// Show speech bubble near a spot element
+const bubbleEl = document.getElementById('bubble');
+let bubbleTimer = null;
 
-      <!-- TV SCREEN -->
-      <div id="tv-screen">
-        <canvas id="tv-canvas"></canvas>
-      </div>
+function showBubble(text, spotEl) {
+  // Position relative to scene
+  const scene = document.getElementById('scene');
+  const sr    = scene.getBoundingClientRect();
+  const er    = spotEl.getBoundingClientRect();
+  const left  = er.left - sr.left;
+  const top   = er.top  - sr.top - 44;
 
-      <!-- KOTATSU EYES -->
-      <div id="kotatsu-eyes">
-        <div class="kotatsu-eye"></div>
-        <div class="kotatsu-eye"></div>
-      </div>
+  bubbleEl.textContent = text;
+  bubbleEl.style.left  = Math.max(4, Math.min(left, sr.width - 200)) + 'px';
+  bubbleEl.style.top   = Math.max(4, top) + 'px';
+  bubbleEl.style.display = 'block';
 
-      <!-- MIKAN HAND -->
-      <div id="mikan-hand"></div>
+  clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(() => { bubbleEl.style.display = 'none'; }, 2400);
+}
 
-      <!-- CLICK ZONES (positioned by JS) -->
-      <div class="click-zone" id="zone-face"          title="💬 話しかける"></div>
-      <div class="click-zone" id="zone-cat"           title="🐱 猫をなでる"></div>
-      <div class="click-zone" id="zone-tv"            title="📺 TVチャンネル切替"></div>
-      <div class="click-zone" id="zone-famicom"       title="🎮 ゲームをする"></div>
-      <div class="click-zone" id="zone-porthole-left" title="🛸 窓の外を見る"></div>
-      <div class="click-zone" id="zone-porthole-right"title="👀 窓の外を見る"></div>
-      <div class="click-zone" id="zone-disco"         title="📈 DISCO株価"></div>
-      <div class="click-zone" id="zone-kotatsu"       title="👁 コタツの下を見る"></div>
-      <div class="click-zone" id="zone-mikan"         title="🍊 みかん"></div>
+// Quick screen flash then restore
+function flashScreen(cb) {
+  const f = document.getElementById('flash');
+  f.style.pointerEvents = 'all';
+  f.style.opacity = '1';
+  setTimeout(() => {
+    f.style.opacity = '0';
+    f.style.pointerEvents = 'none';
+    if (cb) setTimeout(cb, 400);
+  }, 600);
+}
 
-    </div><!-- /scene-image-container -->
-  </div><!-- /scene-wrapper -->
+// =============================================
+// FACE — dialogue lines
+// =============================================
+const faceLines = [
+  'ん〜……こんにちはだねぇ〜！',
+  'それ面白いね〜！',
+  'ん〜……猫かわいいよね〜',
+  'ワイン飲みたいねぇ〜',
+  'DISCO(6146)、気になっとるとよ〜',
+  'ん〜……みかんおいしいね〜',
+];
+let faceIdx = 0;
+document.getElementById('spot-face').addEventListener('click', function() {
+  beep(660, 'sine', 0.2, 0.08);
+  showBubble(faceLines[faceIdx % faceLines.length], this);
+  faceIdx++;
+});
 
-  <!-- ============================================
-       CHAT WINDOW
-       ============================================ -->
-  <div class="mac-window" id="chat-window"
-       style="display:none; top:20%; left:50%; transform:translateX(-50%); width:360px; z-index:500;">
-    <div class="mac-window-title-bar">
-      <div class="mac-window-close" onclick="closeChat()">&#10005;</div>
-      <div class="mac-window-title">&#128172; DISCOちゃんとおしゃべり</div>
-    </div>
-    <div class="mac-window-content">
-      <div id="chat-messages"></div>
-      <div id="chat-input-row">
-        <input type="text" id="chat-input" placeholder="何か話しかけてみよう..." autocomplete="off">
-        <button id="chat-send" class="pixel-btn">送信</button>
-      </div>
-    </div>
-  </div>
+// =============================================
+// CAT — meow, angry on 5th click
+// =============================================
+const meows = ['にゃー！', 'みゃー♪', 'ふにゃ〜', 'にゃん！', 'みゅー？'];
+let catClicks = 0;
+let catTimer  = null;
 
-  <!-- ============================================
-       GAME MODAL
-       ============================================ -->
-  <div class="mac-window" id="game-modal"
-       style="display:none; top:8%; left:50%; transform:translateX(-50%); width:420px; z-index:500;">
-    <div class="mac-window-title-bar">
-      <div class="mac-window-close" onclick="closeGame()">&#10005;</div>
-      <div class="mac-window-title">&#127918; BREAKOUT for HyperCard</div>
-    </div>
-    <div class="mac-window-content" style="padding:4px 4px 0;">
-      <canvas id="game-canvas" style="display:block; width:100%; image-rendering:pixelated; background:#000;"></canvas>
-      <div style="font-family:VT323,monospace; font-size:14px; padding:4px 2px; color:#666; text-align:center;">
-        &#8592; &#8594; / マウスで操作 &nbsp;&bull;&nbsp; スペースでスタート
-      </div>
-    </div>
-  </div>
+document.getElementById('spot-cat').addEventListener('click', function() {
+  catClicks++;
+  clearTimeout(catTimer);
+  catTimer = setTimeout(() => { catClicks = 0; }, 2500);
 
-  <!-- ============================================
-       ABOUT MODAL
-       ============================================ -->
-  <div class="mac-window" id="about-modal"
-       style="display:none; top:15%; left:50%; transform:translateX(-50%); width:320px; z-index:700;">
-    <div class="mac-window-title-bar">
-      <div class="mac-window-close" onclick="this.closest('.mac-window').style.display='none'">&#10005;</div>
-      <div class="mac-window-title">About This HyperCard Stack</div>
-    </div>
-    <div class="mac-window-content" style="font-family:VT323,monospace; font-size:17px; padding:16px;">
-      <div style="text-align:center; font-size:44px; margin-bottom:8px;">&#128421;&#65039;</div>
-      <div style="text-align:center; font-size:22px; font-weight:bold; margin-bottom:4px;">DISCO's HyperCard World</div>
-      <div style="text-align:center; margin-bottom:12px; color:#666;">Version 1.0 &nbsp;&bull;&nbsp; 1993</div>
-      <div style="border-top:1px solid #ccc; padding-top:10px; font-size:15px; line-height:1.7; color:#333;">
-        DISCOちゃんのお部屋へようこそ！<br>
-        猫好き・ワイン好き・投資家。宮崎出身のんびり系。<br><br>
-        &#128172; 顔をクリック &#8594; おしゃべり<br>
-        &#128049; 猫をクリック &#8594; にゃー（5回で怒る）<br>
-        &#128250; TVをクリック &#8594; チャンネル切替<br>
-        &#128760; 左丸窓をクリック &#8594; UFOイベント<br>
-        &#127918; ファミコンをクリック &#8594; ゲーム<br>
-        &#128200; DISCOロゴをクリック &#8594; 株価<br>
-        &#128065; コタツの目をクリック &#8594; 猫が走る<br>
-        &#127818; みかんの辺りを見ていると…
-      </div>
-    </div>
-  </div>
+  if (catClicks >= 5) {
+    beep(300, 'sawtooth', 0.5, 0.2);
+    showBubble('シャーーー！！🙀', this);
+    // Shake scene
+    const scene = document.getElementById('scene');
+    let n = 0;
+    const sh = setInterval(() => {
+      scene.style.transform = n++ % 2 ? 'translateX(5px)' : 'translateX(-5px)';
+      if (n > 7) { clearInterval(sh); scene.style.transform = ''; catClicks = 0; }
+    }, 55);
+    return;
+  }
 
-  <!-- ============================================
-       UFO OVERLAY
-       ============================================ -->
-  <div id="ufo-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:800;">
-    <div id="ufo-sprite" style="position:absolute; font-size:60px; transition:all 0.8s ease;">&#128760;</div>
-  </div>
-  <div id="ufo-blackout" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:900; opacity:0;"></div>
+  beep(rand([480,520,560]), 'sine', 0.25, 0.1);
+  showBubble(rand(meows), this);
+});
 
-  <!-- RUNNING CAT -->
-  <div id="running-cat" style="position:fixed; z-index:200; display:none; font-size:36px; pointer-events:none; top:50%;"></div>
+// =============================================
+// TV — canvas animation cycling
+// =============================================
+const tvDiv = document.getElementById('tv-anim');
+const tvCv  = document.getElementById('tv-cv');
+const tvCtx = tvCv.getContext('2d');
+let tvMode  = 0; // 0=tetris 1=ufo 2=noise
+let tvRaf   = null;
+let tvOn    = false;
+let tvFrame = 0;
 
-  <!-- CRT NOISE OVERLAY -->
-  <div id="crt-noise"></div>
+// Tetris mini state
+const tet = {
+  board: Array(8).fill(0).map(() => Array(5).fill(0)),
+  py: 0, px: 1,
+  step() {
+    this.py++;
+    if (this.py > 6) {
+      this.board[Math.min(7, this.py-1)][this.px] = 1;
+      this.board[Math.min(7, this.py-1)][this.px+1] = 1;
+      this.board = this.board.filter(r => !r.every(Boolean));
+      while(this.board.length < 8) this.board.unshift(Array(5).fill(0));
+      this.py = 0; this.px = Math.floor(Math.random()*3);
+    }
+  }
+};
 
-  <!-- ============================================
-       SCREENSAVER
-       ============================================ -->
-  <div id="screensaver" style="display:none;">
-    <div class="screensaver-text">クリックで戻る &bull; After Dark&#8482; for HyperCard</div>
-  </div>
+function drawTV() {
+  const W = tvCv.width, H = tvCv.height;
+  tvFrame++;
 
-  <!-- ============================================
-       FOOTER
-       ============================================ -->
-  <div id="footer-area">
+  if (tvMode === 0) {
+    // Tetris
+    tvCtx.fillStyle = '#001100'; tvCtx.fillRect(0,0,W,H);
+    const cw = W/5, ch = H/8;
+    tvCtx.fillStyle = '#004400';
+    tet.board.forEach((row,y) => row.forEach((c,x) => { if(c) tvCtx.fillRect(x*cw+1,y*ch+1,cw-2,ch-2); }));
+    tvCtx.fillStyle = '#00ff41';
+    tvCtx.fillRect(tet.px*cw+1, tet.py*ch+1, cw-2, ch-2);
+    tvCtx.fillRect((tet.px+1)*cw+1, tet.py*ch+1, cw-2, ch-2);
+    if (tvFrame % 20 === 0) tet.step();
 
-    <div class="footer-window">
-      <div class="footer-window-title">&#128214; About</div>
-      <div class="footer-window-body">
-        <p>ん〜……このページはDISCOちゃんの秘密基地だよぉ〜！</p>
-        <p>食べ物・ワイン・投資・猫・マンガについて話せるよ〜。</p>
-        <p>クリックできる場所がいっぱいあるから、いろいろ試してみてね〜！</p>
-      </div>
-    </div>
+  } else if (tvMode === 1) {
+    // UFO / city
+    tvCtx.fillStyle = '#000011'; tvCtx.fillRect(0,0,W,H);
+    // stars
+    for(let i=0;i<15;i++) {
+      tvCtx.fillStyle='#fff';
+      tvCtx.fillRect((i*31+tvFrame*0.5)%W, (i*17)%H, 1, 1);
+    }
+    // buildings
+    [0.4,0.6,0.3,0.5,0.7].forEach((h,i) => {
+      tvCtx.strokeStyle='#2244aa'; tvCtx.lineWidth=1;
+      tvCtx.strokeRect(i*(W/5), H-H*h, W/5-1, H*h);
+    });
+    // UFO
+    const ux = (tvFrame*1.2)%(W+20)-10;
+    const uy = H*0.15 + Math.sin(tvFrame*0.08)*6;
+    tvCtx.strokeStyle='#88ff88'; tvCtx.lineWidth=1;
+    tvCtx.beginPath(); tvCtx.ellipse(ux,uy,10,4,0,0,Math.PI*2); tvCtx.stroke();
+    tvCtx.beginPath(); tvCtx.ellipse(ux,uy-3,5,3,0,0,Math.PI); tvCtx.stroke();
 
-    <div class="footer-window">
-      <div class="footer-window-title">&#128279; Links</div>
-      <div class="footer-window-body">
-        <p>
-          <a href="https://www.jpx.co.jp/" target="_blank" rel="noopener" style="color:#000;">&#128200; JPX 東京証券取引所</a><br>
-          <a href="https://finance.yahoo.co.jp/quote/6146.T" target="_blank" rel="noopener" style="color:#000;">&#128185; DISCO(6146) Yahoo Finance</a><br>
-          <a href="https://github.com/" target="_blank" rel="noopener" style="color:#000;">&#128008; GitHub</a>
-        </p>
-      </div>
-    </div>
+  } else {
+    // Noise
+    const id = tvCtx.createImageData(W,H);
+    for(let i=0;i<id.data.length;i+=4){
+      const v = Math.random()>0.5 ? 180 : 20;
+      id.data[i]=id.data[i+1]=id.data[i+2]=v; id.data[i+3]=255;
+    }
+    tvCtx.putImageData(id,0,0);
+  }
 
-    <div class="footer-window">
-      <div class="footer-window-title">&#127918; Games</div>
-      <div class="footer-window-body">
-        <p>
-          <button class="pixel-btn" onclick="document.getElementById('zone-famicom').click()">
-            &#127918; BREAKOUT を遊ぶ
-          </button>
-          &nbsp;
-          <span style="font-size:15px; color:#888;">（近日更新予定...）</span>
-        </p>
-      </div>
-    </div>
+  tvRaf = requestAnimationFrame(drawTV);
+}
 
-    <div class="footer-window">
-      <div class="footer-window-title">&#128221; Blog / 更新履歴</div>
-      <div class="footer-window-body" style="font-size:15px; line-height:1.8;">
-        <p><strong>1993.12.24</strong> &#8212; サイトオープン！クリスマスだねぇ〜&#127881;</p>
-        <p><strong>1993.12.01</strong> &#8212; UFOイベント追加。左の丸窓を押してみよう！</p>
-        <p><strong>1993.11.15</strong> &#8212; ブロック崩しゲーム完成&#127881;</p>
-        <p><strong>1993.11.01</strong> &#8212; コタツの目・みかんイベント追加。</p>
-        <p><strong>1993.10.01</strong> &#8212; DISCOちゃんのお部屋、グランドオープン！</p>
-      </div>
-    </div>
+function startTV() {
+  const rect = document.getElementById('main-img').getBoundingClientRect();
+  const scene = document.getElementById('scene').getBoundingClientRect();
+  const W = rect.width;
+  const H = rect.height;
 
-    <div style="text-align:center; color:#555; font-family:VT323,monospace; padding:16px 10px; font-size:14px; line-height:1.8;">
-      &copy; 1993 DISCOちゃん All Rights Reserved<br>
-      Made with HyperCard 2.2 on Macintosh IIci<br>
-      <span style="font-size:12px; color:#888;">Best viewed at 800&times;600 in 256 colors &bull; Netscape Navigator 1.0 推奨</span>
-    </div>
+  tvDiv.style.display = 'block';
+  tvDiv.style.left   = (W * 0.060) + 'px';
+  tvDiv.style.top    = (H * 0.213) + 'px';
+  tvDiv.style.width  = (W * 0.193) + 'px';
+  tvDiv.style.height = (H * 0.145) + 'px';
 
-  </div><!-- /footer-area -->
+  tvCv.width  = Math.round(W * 0.193);
+  tvCv.height = Math.round(H * 0.145);
 
-  <!-- HINT BAR -->
-  <div id="hint-bar"></div>
+  if (!tvRaf) drawTV();
+}
 
-</div><!-- /main-container -->
+document.getElementById('spot-tv').addEventListener('click', function() {
+  beep(220, 'square', 0.1, 0.07);
+  if (!tvOn) {
+    tvOn = true;
+    startTV();
+    showBubble('📺 カチッ', this);
+  } else {
+    tvMode = (tvMode + 1) % 3;
+    showBubble(['テトリス中…', 'UFO発見！', 'ザーッ…'][tvMode], this);
+  }
+});
 
-<!-- ============================================
-     SCRIPTS (order matters)
-     ============================================ -->
-<script src="js/tv.js"></script>
-<script src="js/chat.js"></script>
-<script src="js/cat.js"></script>
-<script src="js/ufo.js"></script>
-<script src="js/kotatsu.js"></script>
-<script src="js/disco.js"></script>
-<script src="games/breakout/game.js"></script>
-<script src="js/main.js"></script>
+// Reposition TV on resize
+window.addEventListener('resize', () => { if (tvOn) startTV(); });
 
+// =============================================
+// FAMICOM — jingle
+// =============================================
+document.getElementById('spot-fami').addEventListener('click', function() {
+  // Quick chiptune jingle
+  [[523,0],[659,0.15],[784,0.3],[1047,0.45]].forEach(([f,t]) => {
+    setTimeout(() => beep(f,'square',0.2,0.08), t*1000);
+  });
+  showBubble('🎮 ピコーン！', this);
+});
+
+// =============================================
+// PORTHOLE — UFO flash event
+// =============================================
+let ufoUsed = false;
+document.getElementById('spot-port').addEventListener('click', function() {
+  if (ufoUsed) { showBubble('もういないみたい…', this); return; }
+  ufoUsed = true;
+  showBubble('🛸 ！！！', this);
+  beep(180, 'sawtooth', 2, 0.12);
+  setTimeout(() => {
+    flashScreen(() => { ufoUsed = false; });
+    showBubble('連れ去られた……気がする', document.getElementById('spot-port'));
+  }, 800);
+});
+
+// =============================================
+// MIKAN — grab event
+// =============================================
+const mikanLines = ['🍊 みかんおいしい〜', '🍊 ビタミンC！', '🍊 コタツとみかん最高'];
+document.getElementById('spot-mikan').addEventListener('click', function() {
+  beep(440, 'sine', 0.15, 0.07);
+  showBubble(rand(mikanLines), this);
+});
+
+// =============================================
+// DISCO — stock ticker
+// =============================================
+document.getElementById('spot-disco').addEventListener('click', function() {
+  const mock = 42150 + Math.round((Math.random()-0.5)*500);
+  const chg  = ((Math.random()-0.48)*3).toFixed(1);
+  const sign = chg >= 0 ? '+' : '';
+  beep(880, 'sine', 0.1, 0.07);
+  showBubble(`DISCO ¥${mock.toLocaleString()} (${sign}${chg}%)`, this);
+});
+
+// =============================================
+// KOTATSU — eyes / cat runs
+// =============================================
+document.getElementById('spot-kotatsu').addEventListener('click', function() {
+  beep(300, 'square', 0.2, 0.1);
+  // Cat emoji runs across screen
+  const cat = document.createElement('div');
+  cat.style.cssText = `
+    position:fixed; top:${30+Math.random()*40}vh; left:-50px;
+    font-size:32px; z-index:50; pointer-events:none; transition:none;
+  `;
+  cat.textContent = '🐱';
+  document.body.appendChild(cat);
+  let x = -50;
+  const spd = 10 + Math.random()*6;
+  const mv = setInterval(() => {
+    x += spd; cat.style.left = x+'px';
+    if (x > window.innerWidth+60) { clearInterval(mv); cat.remove(); }
+  }, 20);
+  showBubble('👀 …なんかいる', this);
+});
+
+// =============================================
+// SYNC SPOT POSITIONS on load + resize
+// The spots use % in CSS, but tv-anim needs px sync
+// =============================================
+document.getElementById('main-img').addEventListener('load', () => { if(tvOn) startTV(); });
+
+</script>
 </body>
 </html>
