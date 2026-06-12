@@ -1,0 +1,346 @@
+/* ============================================
+   HyperCard Style — 1993 Macintosh Aesthetic
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+:root {
+  --mac-black: #000;
+  --mac-white: #fff;
+  --mac-gray:  #888;
+  --mac-stripe: repeating-linear-gradient(90deg, #000 0 1px, #fff 1px 3px);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: #1c1c1c;
+  font-family: 'VT323', 'Courier New', monospace;
+  overflow-x: hidden;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='20' viewBox='0 0 16 20'%3E%3Cpolygon points='0,0 0,14 4,10 7,17 9,16 6,9 11,9' fill='black' stroke='white' stroke-width='1'/%3E%3C/svg%3E") 0 0, auto;
+}
+
+/* ============================================
+   STARTUP SCREEN
+   ============================================ */
+#startup-screen {
+  position: fixed; inset: 0;
+  background: #fff;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 9999;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+.startup-mac-icon { font-size: 72px; margin-bottom: 18px; animation: mac-pulse 1s ease-in-out infinite alternate; }
+@keyframes mac-pulse { from { opacity: 0.7; } to { opacity: 1; } }
+
+.startup-text { font-size: 20px; color: #333; letter-spacing: 1px; margin-bottom: 18px; min-height: 1.5em; text-align: center; padding: 0 20px; }
+
+.startup-progress {
+  width: 220px; height: 18px;
+  border: 2px solid #000; background: #fff; position: relative;
+}
+.startup-progress-bar { height: 100%; background: #000; width: 0; transition: width 0.08s linear; }
+
+/* ============================================
+   MAIN CONTAINER
+   ============================================ */
+#main-container { display: none; position: relative; width: 100%; min-height: 100vh; background: #2a2a2a; }
+
+/* ============================================
+   MENU BAR
+   ============================================ */
+#menu-bar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 22px; background: #fff;
+  border-bottom: 1px solid #000;
+  display: flex; align-items: center; padding: 0 6px;
+  z-index: 1000;
+  font-family: 'VT323', monospace; font-size: 15px;
+  user-select: none;
+}
+.menu-apple { margin-right: 14px; font-size: 16px; cursor: default; }
+.menu-item  { padding: 0 8px; cursor: default; line-height: 22px; }
+.menu-item:hover, .menu-item.active { background: #000; color: #fff; }
+.menu-clock { margin-left: auto; font-size: 13px; }
+
+/* ============================================
+   SCENE
+   ============================================ */
+#scene-wrapper { position: relative; max-width: 900px; margin: 22px auto 0; }
+
+#scene-image-container { position: relative; width: 100%; }
+
+#main-image {
+  width: 100%; height: auto; display: block;
+  filter: contrast(1.08) brightness(0.98);
+  image-rendering: auto;
+}
+
+/* CRT scanlines */
+#scene-image-container::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.035) 2px, rgba(0,0,0,0.035) 4px);
+  pointer-events: none; z-index: 6;
+}
+
+/* ============================================
+   TV SCREEN
+   ============================================ */
+#tv-screen {
+  position: absolute;
+  background: #001400;
+  border: 2px solid #222;
+  overflow: hidden;
+  z-index: 8;
+  cursor: pointer;
+  /* position/size set by JS */
+}
+#tv-canvas { display: block; width: 100%; height: 100%; }
+
+/* ============================================
+   CLICK ZONES
+   ============================================ */
+.click-zone {
+  position: absolute;
+  cursor: pointer; z-index: 10;
+  border-radius: 4px;
+  border: 2px dashed transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.click-zone:hover {
+  border-color: rgba(0,0,0,0.25);
+  background: rgba(255,255,255,0.08);
+}
+/* Tooltip via title attr — native is fine at this retro aesthetic */
+
+/* ============================================
+   KOTATSU EYES
+   ============================================ */
+#kotatsu-eyes {
+  position: absolute;
+  display: flex; align-items: center; justify-content: space-around;
+  cursor: pointer; z-index: 15;
+}
+.kotatsu-eye {
+  width: 28%; padding-bottom: 28%;
+  background: #000; border-radius: 50%;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.kotatsu-eye.glow { background: #ffe000; box-shadow: 0 0 10px 3px #ffe000; }
+
+/* ============================================
+   MIKAN HAND
+   ============================================ */
+#mikan-hand {
+  position: absolute;
+  z-index: 25; display: none;
+  pointer-events: none;
+  animation: mikan-grab 2.2s ease-in-out forwards;
+}
+@keyframes mikan-grab {
+  0%   { transform: translateY(10px); opacity: 0; }
+  10%  { opacity: 1; }
+  35%  { transform: translateY(-18px); }
+  65%  { transform: translateY(-18px) translateX(22px); }
+  90%  { transform: translateY(8px) translateX(34px); opacity: 0.1; }
+  100% { opacity: 0; }
+}
+
+/* ============================================
+   MAC WINDOWS
+   ============================================ */
+.mac-window {
+  position: fixed;
+  background: #fff;
+  border: 2px solid #000;
+  box-shadow: 4px 4px 0 #000;
+  z-index: 500;
+  min-width: 260px;
+  max-width: 95vw;
+  font-family: 'VT323', monospace;
+}
+.mac-window-title-bar {
+  background: var(--mac-stripe);
+  height: 20px;
+  display: flex; align-items: center; padding: 0 4px;
+  cursor: move; user-select: none;
+}
+.mac-window-close {
+  width: 13px; height: 13px;
+  border: 1.5px solid #000; background: #fff;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 9px; cursor: pointer; margin-right: 6px;
+  line-height: 1;
+}
+.mac-window-close:hover { background: #000; color: #fff; }
+.mac-window-title {
+  flex: 1; text-align: center;
+  font-size: 13px;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000, -1px -1px 0 #000;
+  pointer-events: none;
+}
+.mac-window-content { padding: 10px 12px; }
+
+/* ============================================
+   CHAT WINDOW
+   ============================================ */
+#chat-messages {
+  height: 200px; overflow-y: auto;
+  border: 2px inset #aaa;
+  background: #fff; padding: 6px;
+  margin-bottom: 8px; font-size: 16px; line-height: 1.4;
+}
+.chat-msg-user   { text-align: right; margin-bottom: 6px; }
+.chat-msg-char   { display: flex; align-items: flex-start; gap: 5px; margin-bottom: 6px; }
+.chat-avatar     { font-size: 20px; flex-shrink: 0; }
+.chat-bubble     { background: #eee; border: 1px solid #aaa; padding: 3px 8px; max-width: 80%; font-size: 15px; }
+.chat-bubble-user{ background: #000; color: #fff; border: 1px solid #000; padding: 3px 8px; display: inline-block; font-size: 15px; }
+.chat-typing     { color: #888; font-style: italic; font-size: 14px; }
+
+#chat-input-row  { display: flex; gap: 4px; }
+#chat-input {
+  flex: 1; border: 2px solid #000; padding: 3px 5px;
+  font-family: 'VT323', monospace; font-size: 16px; outline: none;
+}
+#chat-input:focus { border-color: #000; outline: 2px solid #aaa; }
+
+/* ============================================
+   PIXEL BUTTON
+   ============================================ */
+.pixel-btn {
+  border: 2px solid #000; background: #fff;
+  padding: 3px 10px; font-family: 'VT323', monospace; font-size: 17px;
+  cursor: pointer; box-shadow: 2px 2px 0 #000;
+  transition: transform 0.05s, box-shadow 0.05s;
+}
+.pixel-btn:active { transform: translate(2px,2px); box-shadow: none; }
+.pixel-btn:hover  { background: #f0f0f0; }
+
+/* ============================================
+   SPEECH BUBBLE
+   ============================================ */
+.speech-bubble {
+  position: absolute;
+  background: #fff; border: 2px solid #000;
+  padding: 5px 10px; font-size: 18px;
+  white-space: nowrap; z-index: 50;
+  pointer-events: none;
+  box-shadow: 2px 2px 0 #000;
+  animation: bubble-pop 2.2s ease forwards;
+}
+.speech-bubble::after {
+  content: ''; position: absolute;
+  bottom: -11px; left: 16px;
+  border: 8px solid transparent;
+  border-top-color: #000;
+}
+.speech-bubble::before {
+  content: ''; position: absolute;
+  bottom: -9px; left: 18px;
+  border: 6px solid transparent;
+  border-top-color: #fff;
+  z-index: 1;
+}
+@keyframes bubble-pop {
+  0%   { opacity: 0; transform: scale(0.5) translateY(4px); }
+  12%  { opacity: 1; transform: scale(1.07); }
+  20%  { transform: scale(1); }
+  75%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-16px); }
+}
+
+/* ============================================
+   CAT SPECIAL
+   ============================================ */
+#running-cat { font-size: 36px; }
+
+.cat-giant { animation: cat-giant-appear 0.3s ease forwards; }
+@keyframes cat-giant-appear { from { transform: scale(1); } to { transform: scale(2.8) translateY(-20%); } }
+
+/* ============================================
+   CRT NOISE
+   ============================================ */
+#crt-noise {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 997; opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: crt 0.12s steps(1) infinite;
+}
+@keyframes crt { 0%,100% { opacity: 0.025; } 50% { opacity: 0.045; } }
+
+/* ============================================
+   SCREENSAVER
+   ============================================ */
+#screensaver {
+  position: fixed; inset: 0;
+  background: #000; z-index: 9998;
+  cursor: pointer; overflow: hidden;
+}
+.screensaver-text {
+  position: absolute; bottom: 24px;
+  width: 100%; text-align: center;
+  color: #444; font-family: 'VT323', monospace; font-size: 16px;
+  pointer-events: none;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+#footer-area { max-width: 900px; margin: 0 auto; padding: 20px 16px 50px; }
+
+.footer-window { background: #fff; border: 2px solid #000; margin-bottom: 14px; }
+.footer-window-title {
+  background: var(--mac-stripe);
+  padding: 3px 10px; font-size: 16px;
+  color: #fff; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000;
+}
+.footer-window-body { padding: 10px 14px; font-size: 17px; line-height: 1.7; }
+.footer-window-body p { margin-bottom: 4px; }
+.footer-window-body a { color: #000; text-decoration: underline; }
+.footer-window-body a:hover { background: #000; color: #fff; }
+
+/* ============================================
+   HINT BAR
+   ============================================ */
+#hint-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #000; color: #0f0;
+  font-family: 'VT323', monospace; font-size: 14px;
+  padding: 2px 10px; z-index: 990;
+  text-align: center; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 600px) {
+  .mac-window { min-width: 240px; }
+  #chat-window  { width: 94vw !important; left: 3vw !important; transform: none !important; }
+  #game-modal   { width: 94vw !important; left: 3vw !important; transform: none !important; }
+  #about-modal  { width: 92vw !important; left: 4vw !important; transform: none !important; }
+  .speech-bubble { font-size: 14px; }
+  .footer-window-body { font-size: 15px; }
+}
+
+@media (max-width: 400px) {
+  #hint-bar { font-size: 12px; }
+  #menu-bar { font-size: 13px; }
+}
+
+/* ============================================
+   UFO BLACKOUT
+   ============================================ */
+#ufo-blackout { transition: opacity 0.5s ease; }
+
+/* ============================================
+   WINDOW ACTIVE HIGHLIGHT
+   ============================================ */
+.mac-window:focus-within,
+.mac-window.focused { box-shadow: 5px 5px 0 #000; }
