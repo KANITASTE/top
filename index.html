@@ -1,144 +1,238 @@
-// ============================================
-// cat.js - Cat Character Interactions
-// ============================================
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DISCO's HyperCard World ～1993～</title>
+  <meta name="description" content="1993年のHyperCardで作られた不思議なインタラクティブ体験">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+</head>
+<body>
 
-const Cat = (() => {
-  let clickCount = 0;
-  let clickTimer  = null;
-  let isAngry     = false;
-  let catOverlay  = null; // SVG/emoji overlay on the image
+<!-- ============================================
+     STARTUP SCREEN
+     ============================================ -->
+<div id="startup-screen">
+  <div class="startup-mac-icon">🖥</div>
+  <div class="startup-text">HyperCard 2.2 を読み込み中...</div>
+  <div class="startup-progress">
+    <div class="startup-progress-bar" id="startup-progress-bar"></div>
+  </div>
+  <div style="margin-top:14px; font-size:12px; color:#888; font-family:monospace;">
+    System 7.1 &bull; HyperCard 2.2 &bull; &copy;1993
+  </div>
+</div>
 
-  const meows = ['にゃー！', 'みゃー♪', 'ふにゃ〜', 'にゃん！', 'みゅー？', 'にゃにゃ！'];
-  const happyMeows = ['ごろごろ〜', 'にゃ〜ん♡', 'ふみふみ…'];
+<!-- ============================================
+     MAIN CONTAINER
+     ============================================ -->
+<div id="main-container">
 
-  function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  <!-- MAC MENU BAR -->
+  <div id="menu-bar">
+    <span class="menu-apple" title="このコンピュータについて">&#63743;</span>
+    <span class="menu-item" data-menu="File">File</span>
+    <span class="menu-item" data-menu="Edit">Edit</span>
+    <span class="menu-item" data-menu="Go">Go</span>
+    <span class="menu-item" data-menu="Tools">Tools</span>
+    <span class="menu-item" onclick="document.getElementById('about-modal').style.display='block'; document.getElementById('about-modal').style.zIndex='700'">About</span>
+    <span class="menu-clock" id="menu-clock">--:--</span>
+  </div>
 
-  // ---- Audio ----
-  function playMeow(angry = false) {
-    try {
-      const ac = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
-      osc.connect(gain); gain.connect(ac.destination);
-      osc.type = angry ? 'sawtooth' : 'sine';
+  <!-- SCENE WRAPPER -->
+  <div id="scene-wrapper">
+    <div id="scene-image-container">
 
-      if (angry) {
-        osc.frequency.setValueAtTime(600, ac.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(150, ac.currentTime + 0.5);
-        gain.gain.setValueAtTime(0.25, ac.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.55);
-        osc.start(); osc.stop(ac.currentTime + 0.55);
-      } else {
-        osc.frequency.setValueAtTime(480, ac.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(680, ac.currentTime + 0.08);
-        osc.frequency.exponentialRampToValueAtTime(380, ac.currentTime + 0.28);
-        gain.gain.setValueAtTime(0.12, ac.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.32);
-        osc.start(); osc.stop(ac.currentTime + 0.32);
-      }
-    } catch(e) {}
-  }
+      <!-- MAIN IMAGE -->
+      <img id="main-image" src="assets/images/main.jpg" alt="DISCOちゃんのお部屋" draggable="false">
 
-  // ---- Speech bubble ----
-  function showBubble(text, anchorZone) {
-    const container = document.getElementById('scene-image-container');
-    if (!container) return;
-    const bubble = document.createElement('div');
-    bubble.className = 'speech-bubble';
-    bubble.textContent = text;
+      <!-- TV SCREEN -->
+      <div id="tv-screen">
+        <canvas id="tv-canvas"></canvas>
+      </div>
 
-    const zr = anchorZone.getBoundingClientRect();
-    const cr = container.getBoundingClientRect();
-    bubble.style.left = Math.max(4, zr.left - cr.left - 10) + 'px';
-    bubble.style.top  = Math.max(4, zr.top  - cr.top  - 52) + 'px';
-    container.appendChild(bubble);
-    setTimeout(() => bubble.remove(), 2300);
-  }
+      <!-- KOTATSU EYES -->
+      <div id="kotatsu-eyes">
+        <div class="kotatsu-eye"></div>
+        <div class="kotatsu-eye"></div>
+      </div>
 
-  // ---- Giant / angry sequence ----
-  function goAngry(zone) {
-    if (isAngry) return;
-    isAngry = true;
+      <!-- MIKAN HAND -->
+      <div id="mikan-hand"></div>
 
-    playMeow(true);
+      <!-- CLICK ZONES (positioned by JS) -->
+      <div class="click-zone" id="zone-face"          title="💬 話しかける"></div>
+      <div class="click-zone" id="zone-cat"           title="🐱 猫をなでる"></div>
+      <div class="click-zone" id="zone-tv"            title="📺 TVチャンネル切替"></div>
+      <div class="click-zone" id="zone-famicom"       title="🎮 ゲームをする"></div>
+      <div class="click-zone" id="zone-porthole-left" title="🛸 窓の外を見る"></div>
+      <div class="click-zone" id="zone-porthole-right"title="👀 窓の外を見る"></div>
+      <div class="click-zone" id="zone-disco"         title="📈 DISCO株価"></div>
+      <div class="click-zone" id="zone-kotatsu"       title="👁 コタツの下を見る"></div>
+      <div class="click-zone" id="zone-mikan"         title="🍊 みかん"></div>
 
-    // Flash the zone red
-    zone.style.outline = '3px solid red';
-    zone.style.background = 'rgba(255,0,0,0.18)';
+    </div><!-- /scene-image-container -->
+  </div><!-- /scene-wrapper -->
 
-    showBubble('シャーーー！！！🙀', zone);
+  <!-- ============================================
+       CHAT WINDOW
+       ============================================ -->
+  <div class="mac-window" id="chat-window"
+       style="display:none; top:20%; left:50%; transform:translateX(-50%); width:360px; z-index:500;">
+    <div class="mac-window-title-bar">
+      <div class="mac-window-close" onclick="closeChat()">&#10005;</div>
+      <div class="mac-window-title">&#128172; DISCOちゃんとおしゃべり</div>
+    </div>
+    <div class="mac-window-content">
+      <div id="chat-messages"></div>
+      <div id="chat-input-row">
+        <input type="text" id="chat-input" placeholder="何か話しかけてみよう..." autocomplete="off">
+        <button id="chat-send" class="pixel-btn">送信</button>
+      </div>
+    </div>
+  </div>
 
-    // Shake the page slightly
-    document.body.style.animation = 'none';
-    let shakes = 0;
-    const shakeInterval = setInterval(() => {
-      document.getElementById('scene-image-container').style.transform =
-        shakes % 2 === 0 ? 'translateX(4px)' : 'translateX(-4px)';
-      if (++shakes > 6) {
-        clearInterval(shakeInterval);
-        document.getElementById('scene-image-container').style.transform = '';
-      }
-    }, 60);
+  <!-- ============================================
+       GAME MODAL
+       ============================================ -->
+  <div class="mac-window" id="game-modal"
+       style="display:none; top:8%; left:50%; transform:translateX(-50%); width:420px; z-index:500;">
+    <div class="mac-window-title-bar">
+      <div class="mac-window-close" onclick="closeGame()">&#10005;</div>
+      <div class="mac-window-title">&#127918; BREAKOUT for HyperCard</div>
+    </div>
+    <div class="mac-window-content" style="padding:4px 4px 0;">
+      <canvas id="game-canvas" style="display:block; width:100%; image-rendering:pixelated; background:#000;"></canvas>
+      <div style="font-family:VT323,monospace; font-size:14px; padding:4px 2px; color:#666; text-align:center;">
+        &#8592; &#8594; / マウスで操作 &nbsp;&bull;&nbsp; スペースでスタート
+      </div>
+    </div>
+  </div>
 
-    setTimeout(() => {
-      zone.style.outline = '';
-      zone.style.background = '';
-      isAngry = false;
-      clickCount = 0;
-    }, 2500);
-  }
+  <!-- ============================================
+       ABOUT MODAL
+       ============================================ -->
+  <div class="mac-window" id="about-modal"
+       style="display:none; top:15%; left:50%; transform:translateX(-50%); width:320px; z-index:700;">
+    <div class="mac-window-title-bar">
+      <div class="mac-window-close" onclick="this.closest('.mac-window').style.display='none'">&#10005;</div>
+      <div class="mac-window-title">About This HyperCard Stack</div>
+    </div>
+    <div class="mac-window-content" style="font-family:VT323,monospace; font-size:17px; padding:16px;">
+      <div style="text-align:center; font-size:44px; margin-bottom:8px;">&#128421;&#65039;</div>
+      <div style="text-align:center; font-size:22px; font-weight:bold; margin-bottom:4px;">DISCO's HyperCard World</div>
+      <div style="text-align:center; margin-bottom:12px; color:#666;">Version 1.0 &nbsp;&bull;&nbsp; 1993</div>
+      <div style="border-top:1px solid #ccc; padding-top:10px; font-size:15px; line-height:1.7; color:#333;">
+        DISCOちゃんのお部屋へようこそ！<br>
+        猫好き・ワイン好き・投資家。宮崎出身のんびり系。<br><br>
+        &#128172; 顔をクリック &#8594; おしゃべり<br>
+        &#128049; 猫をクリック &#8594; にゃー（5回で怒る）<br>
+        &#128250; TVをクリック &#8594; チャンネル切替<br>
+        &#128760; 左丸窓をクリック &#8594; UFOイベント<br>
+        &#127918; ファミコンをクリック &#8594; ゲーム<br>
+        &#128200; DISCOロゴをクリック &#8594; 株価<br>
+        &#128065; コタツの目をクリック &#8594; 猫が走る<br>
+        &#127818; みかんの辺りを見ていると…
+      </div>
+    </div>
+  </div>
 
-  // ---- Running cat (called from kotatsu.js) ----
-  function runningCatAnimation() {
-    const el = document.getElementById('running-cat');
-    if (!el || el.style.display === 'block') return;
+  <!-- ============================================
+       UFO OVERLAY
+       ============================================ -->
+  <div id="ufo-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:800;">
+    <div id="ufo-sprite" style="position:absolute; font-size:60px; transition:all 0.8s ease;">&#128760;</div>
+  </div>
+  <div id="ufo-blackout" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:900; opacity:0;"></div>
 
-    const cats = ['🐱','🐈','🐱','🐈‍⬛'];
-    el.style.display = 'block';
-    el.style.top = (15 + Math.random() * 55) + 'vh';
-    el.style.left = '-60px';
-    el.style.fontSize = '36px';
+  <!-- RUNNING CAT -->
+  <div id="running-cat" style="position:fixed; z-index:200; display:none; font-size:36px; pointer-events:none; top:50%;"></div>
 
-    let f = 0;
-    const fIntvl = setInterval(() => { el.textContent = cats[f++ % cats.length]; }, 130);
+  <!-- CRT NOISE OVERLAY -->
+  <div id="crt-noise"></div>
 
-    let pos = -60;
-    const speed = 9 + Math.random() * 5;
-    const mIntvl = setInterval(() => {
-      pos += speed;
-      el.style.left = pos + 'px';
-      if (pos > window.innerWidth + 80) {
-        clearInterval(mIntvl);
-        clearInterval(fIntvl);
-        el.style.display = 'none';
-        el.style.left = '-60px';
-      }
-    }, 25);
-  }
+  <!-- ============================================
+       SCREENSAVER
+       ============================================ -->
+  <div id="screensaver" style="display:none;">
+    <div class="screensaver-text">クリックで戻る &bull; After Dark&#8482; for HyperCard</div>
+  </div>
 
-  // ---- Click handler ----
-  function onClick(e) {
-    if (isAngry) return;
-    clickCount++;
-    clearTimeout(clickTimer);
-    clickTimer = setTimeout(() => { clickCount = 0; }, 2500);
+  <!-- ============================================
+       FOOTER
+       ============================================ -->
+  <div id="footer-area">
 
-    const zone = document.getElementById('zone-cat');
+    <div class="footer-window">
+      <div class="footer-window-title">&#128214; About</div>
+      <div class="footer-window-body">
+        <p>ん〜……このページはDISCOちゃんの秘密基地だよぉ〜！</p>
+        <p>食べ物・ワイン・投資・猫・マンガについて話せるよ〜。</p>
+        <p>クリックできる場所がいっぱいあるから、いろいろ試してみてね〜！</p>
+      </div>
+    </div>
 
-    if (clickCount >= 5) {
-      goAngry(zone);
-      return;
-    }
+    <div class="footer-window">
+      <div class="footer-window-title">&#128279; Links</div>
+      <div class="footer-window-body">
+        <p>
+          <a href="https://www.jpx.co.jp/" target="_blank" rel="noopener" style="color:#000;">&#128200; JPX 東京証券取引所</a><br>
+          <a href="https://finance.yahoo.co.jp/quote/6146.T" target="_blank" rel="noopener" style="color:#000;">&#128185; DISCO(6146) Yahoo Finance</a><br>
+          <a href="https://github.com/" target="_blank" rel="noopener" style="color:#000;">&#128008; GitHub</a>
+        </p>
+      </div>
+    </div>
 
-    playMeow(false);
-    const text = clickCount >= 3 ? rand(happyMeows) : rand(meows);
-    showBubble(text, zone);
-  }
+    <div class="footer-window">
+      <div class="footer-window-title">&#127918; Games</div>
+      <div class="footer-window-body">
+        <p>
+          <button class="pixel-btn" onclick="document.getElementById('zone-famicom').click()">
+            &#127918; BREAKOUT を遊ぶ
+          </button>
+          &nbsp;
+          <span style="font-size:15px; color:#888;">（近日更新予定...）</span>
+        </p>
+      </div>
+    </div>
 
-  function init() {
-    const zone = document.getElementById('zone-cat');
-    zone?.addEventListener('click', onClick);
-  }
+    <div class="footer-window">
+      <div class="footer-window-title">&#128221; Blog / 更新履歴</div>
+      <div class="footer-window-body" style="font-size:15px; line-height:1.8;">
+        <p><strong>1993.12.24</strong> &#8212; サイトオープン！クリスマスだねぇ〜&#127881;</p>
+        <p><strong>1993.12.01</strong> &#8212; UFOイベント追加。左の丸窓を押してみよう！</p>
+        <p><strong>1993.11.15</strong> &#8212; ブロック崩しゲーム完成&#127881;</p>
+        <p><strong>1993.11.01</strong> &#8212; コタツの目・みかんイベント追加。</p>
+        <p><strong>1993.10.01</strong> &#8212; DISCOちゃんのお部屋、グランドオープン！</p>
+      </div>
+    </div>
 
-  return { init, runningCatAnimation };
-})();
+    <div style="text-align:center; color:#555; font-family:VT323,monospace; padding:16px 10px; font-size:14px; line-height:1.8;">
+      &copy; 1993 DISCOちゃん All Rights Reserved<br>
+      Made with HyperCard 2.2 on Macintosh IIci<br>
+      <span style="font-size:12px; color:#888;">Best viewed at 800&times;600 in 256 colors &bull; Netscape Navigator 1.0 推奨</span>
+    </div>
+
+  </div><!-- /footer-area -->
+
+  <!-- HINT BAR -->
+  <div id="hint-bar"></div>
+
+</div><!-- /main-container -->
+
+<!-- ============================================
+     SCRIPTS (order matters)
+     ============================================ -->
+<script src="js/tv.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/cat.js"></script>
+<script src="js/ufo.js"></script>
+<script src="js/kotatsu.js"></script>
+<script src="js/disco.js"></script>
+<script src="games/breakout/game.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>
