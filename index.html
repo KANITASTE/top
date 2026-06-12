@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <style>
 
-/* ============ BASE — monochrome only ============ */
+/* ============ BASE ============ */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
 body {
@@ -21,14 +21,13 @@ body {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='20'%3E%3Cpolygon points='0,0 0,16 5,11 8,18 10,17 7,10 13,10' fill='%23000' stroke='%23fff' stroke-width='1'/%3E%3C/svg%3E") 0 0, default;
 }
 
-/* ============ SCENE ============ */
+/* ============ SCENE — no border, overflow hidden for frame-out ============ */
 #scene {
   position: relative;
   width: 100%;
   max-width: 640px;
   user-select: none;
-  outline: 2px solid #000;
-  box-shadow: 4px 4px 0 #000;
+  overflow: hidden;
 }
 #main-img { width:100%; height:auto; display:block; }
 
@@ -40,14 +39,14 @@ body {
 #spot-face    { top:14%; left:50%; width:30%; height:30%; border-radius:50%; }
 #spot-cat     { top:54%; left:58%; width:22%; height:26%; }
 #spot-tv      { top:24%; left:12%; width:24%; height:30%; }
-#spot-fami    { top:62%; left:2%;  width:22%; height:18%; }
-#spot-speakerL{ top:6%;  left:6%;  width:10%; height:16%; border-radius:50%; }
+#spot-fami    { top:60%; left:0%;  width:26%; height:22%; }
+#spot-window  { top:5%;  left:7%;  width:12%; height:20%; border-radius:50%; }
 #spot-mikan   { top:50%; left:35%; width:20%; height:18%; }
 #spot-disco   { top:50%; left:59%; width:14%; height:8%; }
 #spot-kotatsu { top:76%; left:24%; width:42%; height:18%; }
 
-/* ============ EVENT SPRITES (from event illustration) ============ */
-/* Hand reaching for fruit */
+/* ============ EVENT SPRITES ============ */
+/* Hand — slow fade in/out */
 #hand-sprite {
   position: absolute;
   top: 42.3%; left: 43.3%;
@@ -55,50 +54,51 @@ body {
   opacity: 0;
   pointer-events: none;
   z-index: 14;
-  transform: translate(45%, 25%);
 }
 #hand-sprite img { width:100%; height:auto; display:block; }
 
-/* Angry cat — clipped container so it rises out of the kotatsu */
-#cat-clip {
+/* Kotatsu cat — zooms toward viewer, frames out */
+#kcat-sprite {
   position: absolute;
   top: 72.4%; left: 46.7%;
   width: 18.0%;
-  height: 19.5%;
-  overflow: hidden;
+  opacity: 0;
   pointer-events: none;
-  z-index: 14;
+  z-index: 26;
+  transform-origin: 50% 60%;
+  transform: scale(0.4) translateY(20%);
 }
-#cat-sprite {
-  width: 100%;
-  height: auto;
-  display: block;
-  transform: translateY(105%);
-}
+#kcat-sprite img { width:100%; height:auto; display:block; }
 
-/* ============ SPEECH BUBBLE ============ */
+/* UFO porthole — fade toggle */
+#porthole-sprite {
+  position: absolute;
+  top: 7.1%; left: 9.2%;
+  width: 8.4%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 12;
+  transition: opacity 1.4s ease;
+}
+#porthole-sprite img { width:100%; height:auto; display:block; }
+
+/* ============ BUBBLE — simple, fixed top-center ============ */
 #bubble {
   position: absolute;
+  top: 3%;
+  left: 50%;
+  transform: translateX(-50%);
   background: #fff;
   border: 2px solid #000;
-  padding: 5px 10px;
-  font-size: clamp(13px, 2.8vw, 18px);
+  padding: 5px 16px;
+  font-size: clamp(14px, 3vw, 19px);
   white-space: nowrap;
   pointer-events: none;
   display: none;
-  z-index: 20;
-  box-shadow: 2px 2px 0 #000;
-}
-#bubble::after {
-  content:''; position:absolute; bottom:-10px; left:12px;
-  border:8px solid transparent; border-top-color:#000;
-}
-#bubble::before {
-  content:''; position:absolute; bottom:-7px; left:14px;
-  border:6px solid transparent; border-top-color:#fff; z-index:1;
+  z-index: 22;
 }
 
-/* ============ BREAKOUT — full-size overlay ============ */
+/* ============ BREAKOUT ============ */
 #game-overlay {
   position: absolute;
   inset: 0;
@@ -120,14 +120,6 @@ body {
   cursor: pointer; padding: 0 6px;
 }
 #game-cv { flex: 1; display: block; width: 100%; background: #fff; }
-
-/* ============ FLASH ============ */
-#flash {
-  position: fixed; inset: 0;
-  background: #fff; opacity: 0;
-  pointer-events: none; z-index: 100;
-  transition: opacity 0.3s;
-}
 
 /* ============ INFO ============ */
 #info { width: 100%; max-width: 640px; margin-top: 24px; padding: 0 4px; }
@@ -152,9 +144,10 @@ body {
 
   <!-- Event sprites -->
   <div id="hand-sprite"><img src="hand.png" alt=""></div>
-  <div id="cat-clip"><img src="cat.png" alt="" id="cat-sprite"></div>
+  <div id="kcat-sprite"><img src="cat.png" alt=""></div>
+  <div id="porthole-sprite"><img src="porthole.png" alt=""></div>
 
-  <!-- Speech bubble -->
+  <!-- Bubble -->
   <div id="bubble"></div>
 
   <!-- Breakout -->
@@ -171,7 +164,7 @@ body {
   <div class="spot" id="spot-cat"></div>
   <div class="spot" id="spot-tv"></div>
   <div class="spot" id="spot-fami"></div>
-  <div class="spot" id="spot-speakerL"></div>
+  <div class="spot" id="spot-window"></div>
   <div class="spot" id="spot-mikan"></div>
   <div class="spot" id="spot-disco"></div>
   <div class="spot" id="spot-kotatsu"></div>
@@ -189,17 +182,21 @@ body {
   </div>
 </div>
 
-<div id="flash"></div>
-
 <script>
 // ============================================================
 // UTILS
 // ============================================================
 function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
+// Shared AudioContext (browsers limit instances)
+let _ac=null;
+function getAC(){
+  if(!_ac){ try{ _ac=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  return _ac;
+}
 function beep(freq, type, dur, vol){
+  const ac=getAC(); if(!ac) return;
   try{
-    const ac=new(window.AudioContext||window.webkitAudioContext)();
     const o=ac.createOscillator(), g=ac.createGain();
     o.connect(g); g.connect(ac.destination);
     o.type=type||'square'; o.frequency.value=freq;
@@ -209,30 +206,24 @@ function beep(freq, type, dur, vol){
   }catch(e){}
 }
 
+// Safe localStorage (Brave/private mode can throw)
+const store={
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} },
+};
+
+// Bubble — fixed top-center
 const bubbleEl=document.getElementById('bubble');
 let bubbleTimer=null;
-function showBubble(text, spotEl){
-  const sr=document.getElementById('scene').getBoundingClientRect();
-  const er=spotEl.getBoundingClientRect();
-  bubbleEl.style.display='block';
+function showBubble(text){
   bubbleEl.textContent=text;
-  const bw=bubbleEl.offsetWidth;
-  let left=Math.max(4, Math.min(er.left-sr.left, sr.width-bw-6));
-  let top=Math.max(4, er.top-sr.top-46);
-  bubbleEl.style.left=left+'px';
-  bubbleEl.style.top=top+'px';
+  bubbleEl.style.display='block';
   clearTimeout(bubbleTimer);
   bubbleTimer=setTimeout(()=>{ bubbleEl.style.display='none'; },2600);
 }
 
-function flashWhite(){
-  const f=document.getElementById('flash');
-  f.style.pointerEvents='all'; f.style.opacity='1';
-  setTimeout(()=>{ f.style.opacity='0'; f.style.pointerEvents='none'; },350);
-}
-
 // ============================================================
-// FACE — dialogue
+// FACE
 // ============================================================
 const faceLines=[
   'ん〜……こんにちはだねぇ〜！',
@@ -244,24 +235,24 @@ const faceLines=[
   '宮崎はええとこだよぉ〜',
 ];
 let faceIdx=0;
-document.getElementById('spot-face').addEventListener('click',function(){
+document.getElementById('spot-face').addEventListener('click',()=>{
   beep(660,'sine',0.18,0.07);
-  showBubble(faceLines[faceIdx++%faceLines.length], this);
+  showBubble(faceLines[faceIdx++%faceLines.length]);
 });
 
 // ============================================================
-// LAP CAT — meow / 5-click angry shake (kept)
+// LAP CAT — meow / 5-click shake (kept)
 // ============================================================
 const meows=['にゃー！','みゃー♪','ふにゃ〜','にゃん！','みゅー？'];
 let catClicks=0, catTimer=null;
-document.getElementById('spot-cat').addEventListener('click',function(){
+document.getElementById('spot-cat').addEventListener('click',()=>{
   catClicks++;
   clearTimeout(catTimer);
   catTimer=setTimeout(()=>{ catClicks=0; },2500);
 
   if(catClicks>=5){
     beep(200,'sawtooth',0.5,0.2);
-    showBubble('シャーーー！！', this);
+    showBubble('シャーーー！！');
     const scene=document.getElementById('scene');
     let n=0;
     const sh=setInterval(()=>{
@@ -271,22 +262,21 @@ document.getElementById('spot-cat').addEventListener('click',function(){
     return;
   }
   beep(rand([460,520,580]),'sine',0.22,0.08);
-  showBubble(rand(meows), this);
+  showBubble(rand(meows));
 });
 
 // ============================================================
-// TV — sound + bubble only (no overlay)
+// TV
 // ============================================================
 const tvLines=['ジー……','（テトリスがやりたいなぁ）','ザザッ…','（UFO特集やってる）'];
 let tvIdx=0;
-document.getElementById('spot-tv').addEventListener('click',function(){
+document.getElementById('spot-tv').addEventListener('click',()=>{
   beep(120,'square',0.12,0.08);
-  showBubble(tvLines[tvIdx++%tvLines.length], this);
+  showBubble(tvLines[tvIdx++%tvLines.length]);
 });
 
 // ============================================================
-// MIKAN HAND EVENT — sprite from event illustration
-// slides in → grabs → retreats
+// MIKAN HAND — slow fade in, hold, slow fade out
 // ============================================================
 let handBusy=false;
 
@@ -295,135 +285,131 @@ function playHand(){
   handBusy=true;
   const el=document.getElementById('hand-sprite');
 
-  // Phase 1: slide in from lower-right (arm direction)
+  // slow fade in with subtle drift
   el.style.transition='none';
-  el.style.transform='translate(45%, 25%)';
+  el.style.transform='translate(3%,2%)';
   el.style.opacity='0';
 
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{
-      el.style.transition='transform 0.9s cubic-bezier(0.22,1,0.36,1), opacity 0.5s';
-      el.style.transform='translate(0,0)';
-      el.style.opacity='1';
-    });
-  });
+  requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
+    el.style.transition='opacity 2.2s ease, transform 2.2s ease';
+    el.style.opacity='1';
+    el.style.transform='translate(0,0)';
+  }); });
 
-  beep(180,'sine',0.3,0.05);
+  beep(180,'sine',0.4,0.04);
 
-  // Phase 2: grab jiggle
+  // gentle grab wiggle mid-hold
   setTimeout(()=>{
-    el.style.transition='transform 0.1s';
-    let n=0;
-    const jiggle=setInterval(()=>{
-      el.style.transform=n++%2?'translate(1.5%,-1%)':'translate(-1%,0.5%)';
-      if(n>5){
-        clearInterval(jiggle);
-        el.style.transform='translate(0,0)';
-      }
-    },100);
-    beep(240,'sawtooth',0.15,0.07);
-  },1000);
+    el.style.transition='transform 0.25s ease';
+    el.style.transform='translate(0.6%,-0.5%)';
+    setTimeout(()=>{ el.style.transform='translate(0,0)'; },260);
+    beep(240,'sine',0.2,0.05);
+  },2600);
 
-  // Phase 3: retreat
+  // slow fade out with drift
   setTimeout(()=>{
-    el.style.transition='transform 0.7s cubic-bezier(0.55,0,1,0.45), opacity 0.5s';
-    el.style.transform='translate(50%, 30%)';
+    el.style.transition='opacity 2.2s ease, transform 2.2s ease';
     el.style.opacity='0';
-  },2200);
+    el.style.transform='translate(3%,2%)';
+  },3600);
 
-  setTimeout(()=>{ handBusy=false; },3100);
+  setTimeout(()=>{ handBusy=false; },6000);
 }
 
-document.getElementById('spot-mikan').addEventListener('click',function(){
-  showBubble('！？', this);
+document.getElementById('spot-mikan').addEventListener('click',()=>{
+  showBubble('！？');
   playHand();
 });
 
-// Random auto event (20–60s)
+// random auto event
 function scheduleHand(){
-  setTimeout(()=>{ playHand(); scheduleHand(); }, 20000+Math.random()*40000);
+  setTimeout(()=>{ playHand(); scheduleHand(); }, 25000+Math.random()*40000);
 }
 scheduleHand();
 
 // ============================================================
-// KOTATSU CAT EVENT — sprite rises out of the futon
+// KOTATSU CAT — pops out, zooms toward viewer, frames out fading
 // ============================================================
 let kcatBusy=false;
 
 function playKotatsuCat(){
   if(kcatBusy) return;
   kcatBusy=true;
-  const img=document.getElementById('cat-sprite');
+  const el=document.getElementById('kcat-sprite');
 
-  // Rise
-  img.style.transition='transform 0.45s cubic-bezier(0.34,1.4,0.64,1)';
-  img.style.transform='translateY(0)';
-  beep(200,'sawtooth',0.4,0.15);
-  setTimeout(()=>beep(170,'sawtooth',0.25,0.1),180);
+  // reset
+  el.style.transition='none';
+  el.style.transform='scale(0.4) translateY(20%)';
+  el.style.opacity='0';
 
-  // Angry wobble
+  // phase 1: pop out of kotatsu
+  requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
+    el.style.transition='transform 0.4s cubic-bezier(0.34,1.4,0.64,1), opacity 0.3s';
+    el.style.transform='scale(1) translateY(0)';
+    el.style.opacity='1';
+  }); });
+
+  beep(200,'sawtooth',0.35,0.13);
+
+  // phase 2: zoom toward viewer — grows huge, frames out, fades
   setTimeout(()=>{
-    img.style.transition='transform 0.08s';
-    let n=0;
-    const wob=setInterval(()=>{
-      img.style.transform=`translateY(0) translateX(${n%2?2:-2}%)`;
-      if(++n>7){ clearInterval(wob); img.style.transform='translateY(0)'; }
-    },80);
-  },500);
+    el.style.transition='transform 1.5s cubic-bezier(0.5,0,0.9,0.4), opacity 1.0s ease 0.6s';
+    el.style.transform='scale(6) translateY(-35%)';
+    el.style.opacity='0';
+    beep(160,'sawtooth',0.6,0.15);
+    setTimeout(()=>beep(140,'sawtooth',0.4,0.1),250);
+  },800);
 
-  // Sink back
   setTimeout(()=>{
-    img.style.transition='transform 0.5s cubic-bezier(0.55,0,1,0.45)';
-    img.style.transform='translateY(105%)';
-  },2400);
-
-  setTimeout(()=>{ kcatBusy=false; },3000);
+    el.style.transition='none';
+    el.style.transform='scale(0.4) translateY(20%)';
+    kcatBusy=false;
+  },2700);
 }
 
-document.getElementById('spot-kotatsu').addEventListener('click',function(){
-  showBubble('！！', this);
+document.getElementById('spot-kotatsu').addEventListener('click',()=>{
+  showBubble('！！');
   playKotatsuCat();
 });
 
 // ============================================================
-// SPEAKER (round) — UFO white flash event
+// LEFT WINDOW — UFO porthole fade toggle
 // ============================================================
-let ufoReady=true;
-document.getElementById('spot-speakerL').addEventListener('click',function(){
-  if(!ufoReady){ showBubble('……シーン', this); return; }
-  ufoReady=false;
-  showBubble('！！！', this);
-  beep(150,'sawtooth',1.2,0.12);
-  setTimeout(()=>{
-    flashWhite();
-    setTimeout(()=>{
-      showBubble('…なにかが通り過ぎた', document.getElementById('spot-speakerL'));
-      ufoReady=true;
-    },400);
-  },500);
+let portholeOn=false;
+document.getElementById('spot-window').addEventListener('click',()=>{
+  const el=document.getElementById('porthole-sprite');
+  portholeOn=!portholeOn;
+  el.style.opacity=portholeOn?'1':'0';
+  if(portholeOn){
+    beep(150,'sawtooth',1.0,0.08);
+    showBubble('…窓の外に何かいる');
+  } else {
+    beep(300,'sine',0.4,0.05);
+    showBubble('…消えた');
+  }
 });
 
 // ============================================================
-// DISCO — stock ticker
+// DISCO
 // ============================================================
-document.getElementById('spot-disco').addEventListener('click',function(){
+document.getElementById('spot-disco').addEventListener('click',()=>{
   const p=42150+Math.round((Math.random()-0.5)*600);
   const c=((Math.random()-0.48)*3).toFixed(1);
   const s=c>=0?'+':'';
   beep(880,'sine',0.12,0.07);
-  showBubble(`DISCO ¥${p.toLocaleString()} (${s}${c}%)`, this);
+  showBubble(`DISCO ¥${p.toLocaleString()} (${s}${c}%)`);
 });
 
 // ============================================================
-// FAMICOM — breakout
+// FAMICOM — open game
 // ============================================================
-document.getElementById('spot-fami').addEventListener('click',function(){
+document.getElementById('spot-fami').addEventListener('click',()=>{
   beep(523,'square',0.12,0.07);
   openGame();
 });
 
 // ============================================================
-// BREAKOUT — monochrome, full overlay
+// BREAKOUT
 // ============================================================
 let gameRaf=null, gameOn=false;
 const bk={
@@ -441,15 +427,15 @@ function openGame(){
   const topbar=document.getElementById('game-topbar');
   const cv=document.getElementById('game-cv');
   cv.width=scene.offsetWidth;
-  cv.height=scene.offsetHeight - topbar.offsetHeight;
-  bk.hi=parseInt(localStorage.getItem('bk_hi')||'0');
+  cv.height=Math.max(200, scene.offsetHeight - topbar.offsetHeight);
+  bk.hi=parseInt(store.get('bk_hi')||'0');
   bk.state='title';
   if(!gameRaf) gameLoop();
 }
 
 window.closeGame=function(){
   document.getElementById('game-overlay').classList.remove('active');
-  cancelAnimationFrame(gameRaf);
+  if(gameRaf) cancelAnimationFrame(gameRaf);
   gameRaf=null; gameOn=false;
 };
 
@@ -488,8 +474,8 @@ function drawDither(ctx,W,H){
 }
 
 function gameLoop(){
+  if(!gameOn){ gameRaf=null; return; }
   const cv=document.getElementById('game-cv');
-  if(!cv){ gameRaf=null; return; }
   const ctx=cv.getContext('2d');
   const W=cv.width, H=cv.height;
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
@@ -537,7 +523,7 @@ function update(W,H){
     beep(150,'sawtooth',0.3,0.1);
     if(bk.lives<=0){
       bk.state='over';
-      if(bk.score>bk.hi){ bk.hi=bk.score; localStorage.setItem('bk_hi',bk.hi); }
+      if(bk.score>bk.hi){ bk.hi=bk.score; store.set('bk_hi',bk.hi); }
       return;
     }
     resetBall(document.getElementById('game-cv'));
@@ -560,7 +546,7 @@ function update(W,H){
 
   if(bk.bricks.every(br=>!br.alive)){
     bk.state='clear';
-    if(bk.score>bk.hi){ bk.hi=bk.score; localStorage.setItem('bk_hi',bk.hi); }
+    if(bk.score>bk.hi){ bk.hi=bk.score; store.set('bk_hi',bk.hi); }
   }
 }
 
@@ -590,7 +576,7 @@ function render(ctx,W,H){
 
 document.addEventListener('keydown',e=>{
   bk.keys[e.key]=true;
-  if(e.key===' '){ e.preventDefault(); gameAction(); }
+  if(e.key===' ' && gameOn){ e.preventDefault(); gameAction(); }
 });
 document.addEventListener('keyup',e=>{ bk.keys[e.key]=false; });
 
