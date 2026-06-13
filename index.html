@@ -82,8 +82,8 @@ body {
    コタツ天板すぐ下: top約68%, 中央寄り */
 #kcat-sprite {
   position: absolute;
-  top: 68%; left: 30%;
-  width: 22%;
+  top: 78.3%; left: 45.4%;
+  width: 16.8%;
   opacity: 0; pointer-events: none; z-index: 26;
   transform-origin: 50% 80%;
   transform: translateY(60%);
@@ -478,18 +478,23 @@ function triggerUFO(){
   playUFOSound();
   showBubble('…窓の外に何かいる！');
 
+  // UFO中は表情アニメを完全停止（ちらつき防止）
+  faceOverlay.style.transition='none';
+  faceOverlay.style.opacity='0';
+
   let frame=0;
+  // フレーム間隔: UFO1=700ms, 2-6=550→350ms, 7-8=280ms
+  const frameDurations=[700, 550, 500, 450, 400, 350, 280, 280];
 
   function showNextFrame(){
     if(frame >= ufoImages.length){
-      // UFO8表示後：少し待って震え→ホワイトアウト
+      // 全フレーム表示後: 少し待って震え→ホワイトアウト
       setTimeout(()=>{
         shakeScene(16, 55, ()=>{
-          // ホワイトアウト
           whiteout.style.transition='opacity 0.6s ease';
           whiteout.style.opacity='1';
           setTimeout(()=>{
-            // UFOオーバーレイを消す
+            // UFOオーバーレイ非表示
             ufoOverlay.style.transition='none';
             ufoOverlay.style.opacity='0';
             ufoOverlayImg.src='';
@@ -499,41 +504,24 @@ function triggerUFO(){
             setTimeout(()=>{ ufoRunning=false; },1000);
           },700);
         });
-      },700);
+      },600);
       return;
     }
 
     const src=ufoImages[frame];
+    const dur=frameDurations[frame]||400;
     frame++;
 
+    // UFO1枚目: フェードイン。2枚目以降はopacity触らずsrcだけ差し替え（ちらつきゼロ）
     if(frame===1){
-      // 最初はフェードイン
       ufoOverlayImg.src=src;
-      ufoOverlay.style.transition='opacity 0.4s ease';
+      ufoOverlay.style.transition='opacity 0.35s ease';
       ufoOverlay.style.opacity='1';
-      setTimeout(showNextFrame, 600);
-    } else if(frame<=6){
-      // UFO2〜6: クロスフェード（UFOが近づいてくる）
-      // 徐々にフレームを速くしてスピード感
-      const dur = 600 - (frame-1)*40; // 560→360ms
-      ufoOverlay.style.transition='opacity 0.12s ease';
-      ufoOverlay.style.opacity='0.75';
-      setTimeout(()=>{
-        ufoOverlayImg.src=src;
-        ufoOverlay.style.transition='opacity 0.12s ease';
-        ufoOverlay.style.opacity='1';
-      },120);
       setTimeout(showNextFrame, dur);
     } else {
-      // UFO7〜8: さらに速く（迫ってくる）
-      ufoOverlay.style.transition='opacity 0.08s ease';
-      ufoOverlay.style.opacity='0.7';
-      setTimeout(()=>{
-        ufoOverlayImg.src=src;
-        ufoOverlay.style.transition='opacity 0.08s ease';
-        ufoOverlay.style.opacity='1';
-      },80);
-      setTimeout(showNextFrame, 300);
+      // opacityを変えずにsrcだけ切り替える
+      ufoOverlayImg.src=src;
+      setTimeout(showNextFrame, dur);
     }
   }
 
