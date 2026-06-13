@@ -709,14 +709,7 @@ function gameLoop(){
     const t=Date.now();
     const blink = Math.floor(t/400)%2===0; // CLICK文字のみ点滅
 
-    // テキストエリアに白い背景パネル（Macダイアログ風）— ディザ背景でも文字を確実に視認可能に
-    const panelY = H*0.28, panelH = H*0.62;
-    ctx.fillStyle='#fff';
-    ctx.fillRect(0, panelY, W, panelH);
-    ctx.strokeStyle='#000'; ctx.lineWidth=2;
-    ctx.strokeRect(1, panelY, W-2, panelH);
-
-    // 多言語おめでとうテキスト（常時表示・点滅なし）— 黒文字
+    // 多言語おめでとうテキスト（常時表示・点滅なし）— 白文字＋黒縁取りで視認性確保
     const msgs=[
       {t:'おめでとうございます！', f:'bold '+Math.round(W*0.062)+'px VT323,monospace', y:H*0.40},
       {t:'Congratulations!',        f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.50},
@@ -724,15 +717,22 @@ function gameLoop(){
       {t:'¡Felicidades!',           f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.68},
     ];
     ctx.textAlign='center';
-    ctx.fillStyle='#000';
+    ctx.lineWidth=3;
+    ctx.strokeStyle='#000';
+    ctx.fillStyle='#fff';
     msgs.forEach((m)=>{
-      ctx.font=m.f; ctx.fillText(m.t,W/2,m.y);
+      ctx.font=m.f;
+      ctx.strokeText(m.t,W/2,m.y);
+      ctx.fillText(m.t,W/2,m.y);
     });
 
     // CLICKでタイトルへ（これだけ点滅。区切り線は表示しない）
     ctx.font=`${Math.round(W*0.036)}px VT323,monospace`;
-    ctx.fillStyle = blink ? '#000' : 'rgba(0,0,0,0)';
-    ctx.fillText('CLICK でタイトルへ',W/2,H*0.85);
+    if(blink){
+      ctx.lineWidth=2.5;
+      ctx.strokeStyle='#000'; ctx.strokeText('CLICK でタイトルへ',W/2,H*0.85);
+      ctx.fillStyle='#fff'; ctx.fillText('CLICK でタイトルへ',W/2,H*0.85);
+    }
     ctx.textAlign='left';
 
     // 画面外枠にディザボーダー（HyperCard風）
