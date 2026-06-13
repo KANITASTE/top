@@ -6,32 +6,56 @@
 <title>KANITASTE</title>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <style>
-
-/* ============ BASE ============ */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
 body {
   background: #fff;
   font-family: 'VT323', monospace;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: flex; flex-direction: column; align-items: center;
   padding: 40px 20px 60px;
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='20'%3E%3Cpolygon points='0,0 0,16 5,11 8,18 10,17 7,10 13,10' fill='%23000' stroke='%23fff' stroke-width='1'/%3E%3C/svg%3E") 0 0, default;
 }
 
-/* ============ SCENE ============ */
 #scene {
   position: relative;
-  width: 100%;
-  max-width: 640px;
-  user-select: none;
-  overflow: hidden;
+  width: 100%; max-width: 640px;
+  user-select: none; overflow: hidden;
 }
 #main-img { width:100%; height:auto; display:block; }
 
-/* ============ HOTSPOTS ============ */
+/* 表情オーバーレイ — シーン全体にかぶせてクロスフェード */
+#face-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 5;
+  opacity: 0;
+}
+#face-overlay img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+
+/* UFOシーケンスオーバーレイ */
+#ufo-scene-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 6;
+  opacity: 0;
+}
+#ufo-scene-overlay img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+
+/* ホワイトアウト */
+#whiteout {
+  position: absolute; inset: 0;
+  background: #fff; z-index: 50;
+  opacity: 0; pointer-events: none;
+}
+
+/* ホットスポット */
 .spot {
   position: absolute;
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ctext y='16' font-size='16' fill='%23000'%3E%2B%3C/text%3E%3C/svg%3E") 10 10, crosshair;
@@ -40,108 +64,51 @@ body {
 #spot-cat     { top:54%; left:58%; width:22%; height:26%; }
 #spot-tv      { top:24%; left:12%; width:24%; height:30%; }
 #spot-fami    { top:60%; left:0%;  width:26%; height:22%; }
-#spot-window  { top:5%;  left:7%;  width:12%; height:20%; border-radius:50%; }
+#spot-window  { top:5%;  left:7%;  width:12%; height:20%; border-radius:50%; z-index:10; }
 #spot-mikan   { top:50%; left:35%; width:20%; height:18%; }
-#spot-disco   { top:50%; left:59%; width:14%; height:8%; }
+#spot-disco   { top:50%; left:59%; width:14%; height:8%;  }
 #spot-kotatsu { top:76%; left:24%; width:42%; height:18%; }
 
-/* ============ EVENT SPRITES ============ */
-/* Hand — slow fade in/out */
+/* みかんの手 */
 #hand-sprite {
   position: absolute;
   top: 42.3%; left: 43.3%;
   width: 14.8%;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 14;
+  opacity: 0; pointer-events: none; z-index: 14;
 }
 #hand-sprite img { width:100%; height:auto; display:block; }
 
-/* Kotatsu cat — コタツの布団下から飛び出す (preview.webp赤線位置に合わせ) */
+/* コタツ猫 — preview赤線位置に合わせて調整
+   コタツ天板すぐ下: top約68%, 中央寄り */
 #kcat-sprite {
   position: absolute;
-  top: 83%; left: 42%;
-  width: 20%;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 26;
-  transform-origin: 50% 100%;
-  transform: scale(0.5) translateY(60%);
+  top: 68%; left: 30%;
+  width: 22%;
+  opacity: 0; pointer-events: none; z-index: 26;
+  transform-origin: 50% 80%;
+  transform: translateY(60%);
 }
 #kcat-sprite img { width:100%; height:auto; display:block; }
 
-/* UFO window sprite (left porthole) */
-#ufo-window-sprite {
-  position: absolute;
-  top: 5%; left: 7%;
-  width: 12%;
-  pointer-events: none;
-  z-index: 12;
-  display: block;
-}
-#ufo-window-sprite img { width:100%; height:auto; display:block; }
-
-/* UFO fullscreen overlay */
-#ufo-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 800;
-  pointer-events: none;
-}
-
-/* UFO animation sprite (center stage) */
-#ufo-anim-sprite {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 30%;
-  transition: none;
-}
-#ufo-anim-sprite img { width:100%; height:auto; display:block; }
-
-/* Whiteout overlay */
-#ufo-whiteout {
-  position: fixed;
-  inset: 0;
-  background: #fff;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 900;
-  display: none;
-  transition: opacity 0.5s ease;
-}
-
-/* ============ BUBBLE ============ */
+/* バブル */
 #bubble {
   position: absolute;
-  top: 3%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #fff;
-  border: 2px solid #000;
+  top: 3%; left: 50%; transform: translateX(-50%);
+  background: #fff; border: 2px solid #000;
   padding: 5px 16px;
   font-size: clamp(14px, 3vw, 19px);
-  white-space: nowrap;
-  pointer-events: none;
-  display: none;
-  z-index: 22;
+  white-space: nowrap; pointer-events: none;
+  display: none; z-index: 22;
 }
 
-/* ============ BREAKOUT ============ */
+/* ブロック崩し */
 #game-overlay {
-  position: absolute;
-  inset: 0;
-  background: #fff;
-  z-index: 30;
-  display: none;
-  flex-direction: column;
+  position: absolute; inset: 0; background: #fff;
+  z-index: 30; display: none; flex-direction: column;
 }
 #game-overlay.active { display: flex; }
 #game-topbar {
-  height: 28px; background: #000; color: #fff;
-  font-size: 18px;
+  height: 28px; background: #000; color: #fff; font-size: 18px;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 8px; flex-shrink: 0;
 }
@@ -152,7 +119,7 @@ body {
 }
 #game-cv { flex: 1; display: block; width: 100%; background: #fff; }
 
-/* ============ INFO ============ */
+/* info */
 #info { width: 100%; max-width: 640px; margin-top: 24px; padding: 0 4px; }
 .years { font-size: clamp(13px,2.5vw,17px); color: #888; line-height: 2.2; margin-bottom: 14px; }
 .years a { color:#888; text-decoration:none; border-bottom:1px solid #ccc; }
@@ -163,28 +130,32 @@ body {
   text-decoration:none; border-bottom:2px solid #000; padding-bottom:1px;
 }
 .links a:hover { background:#000; color:#fff; }
-
 @media(max-width:480px){ body{padding:20px 12px 48px;} }
-
 </style>
 </head>
 <body>
 
 <div id="scene">
-  <!-- メイン画像: face/main1.png をデフォルト表示 -->
-  <img src="face/main1.png" alt="KANITASTE" id="main-img">
+  <!-- メイン画像: main.pngに変更 -->
+  <img src="main.png" alt="KANITASTE" id="main-img">
 
-  <!-- Event sprites -->
+  <!-- 表情オーバーレイ -->
+  <div id="face-overlay"><img src="" alt="" id="face-overlay-img"></div>
+
+  <!-- UFOシーケンスオーバーレイ -->
+  <div id="ufo-scene-overlay"><img src="" alt="" id="ufo-overlay-img"></div>
+
+  <!-- ホワイトアウト -->
+  <div id="whiteout"></div>
+
+  <!-- イベントスプライト -->
   <div id="hand-sprite"><img src="hand.png" alt=""></div>
   <div id="kcat-sprite"><img src="cat.png" alt=""></div>
 
-  <!-- UFO left-window: UFO1.png (UFOが存在しない状態) をデフォルト表示 -->
-  <div id="ufo-window-sprite"><img src="UFO/UFO1.png" alt="" id="ufo-window-img"></div>
-
-  <!-- Bubble -->
+  <!-- バブル -->
   <div id="bubble"></div>
 
-  <!-- Breakout -->
+  <!-- ブロック崩し -->
   <div id="game-overlay">
     <div id="game-topbar">
       <span>&#9632; BLOCK KUZUSHI</span>
@@ -193,12 +164,7 @@ body {
     <canvas id="game-cv"></canvas>
   </div>
 
-  <!-- UFO fullscreen animation overlay -->
-  <div id="ufo-overlay">
-    <div id="ufo-anim-sprite"><img src="UFO/UFO1.png" alt="" id="ufo-anim-img"></div>
-  </div>
-
-  <!-- Hotspots -->
+  <!-- ホットスポット -->
   <div class="spot" id="spot-face"></div>
   <div class="spot" id="spot-cat"></div>
   <div class="spot" id="spot-tv"></div>
@@ -208,9 +174,6 @@ body {
   <div class="spot" id="spot-disco"></div>
   <div class="spot" id="spot-kotatsu"></div>
 </div>
-
-<!-- Whiteout (full page) -->
-<div id="ufo-whiteout"></div>
 
 <div id="info">
   <div class="years">
@@ -230,7 +193,7 @@ body {
 // ============================================================
 function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
-let _ac=null;
+let _ac = null;
 function getAC(){
   if(!_ac){ try{ _ac=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
   return _ac;
@@ -246,77 +209,107 @@ function beep(freq, type, dur, vol){
     o.start(); o.stop(ac.currentTime+dur);
   }catch(e){}
 }
-
 const store={
   get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
   set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} },
 };
-
 const bubbleEl=document.getElementById('bubble');
 let bubbleTimer=null;
 function showBubble(text){
-  bubbleEl.textContent=text;
-  bubbleEl.style.display='block';
+  bubbleEl.textContent=text; bubbleEl.style.display='block';
   clearTimeout(bubbleTimer);
   bubbleTimer=setTimeout(()=>{ bubbleEl.style.display='none'; },2600);
 }
 
 // ============================================================
-// FACE ANIMATION
-// まばたき: main2, main3, main8 → 4〜12秒ごとにランダム
-// 表情変化: main5, main6, main7 → 30〜90秒に1回
+// 表情アニメーション
+// ロジック:
+//   - 基本はmain1.png（ベース画像がmain1相当なのでオーバーレイなし）
+//   - まばたき: 2→3→(間)→8→(間)→元に戻る を人間らしい速度で
+//   - たまに（20〜60秒に一度）5/6/7のランダム表情に切り替え
 // ============================================================
-const mainImg = document.getElementById('main-img');
-const FACE_NORMAL  = 'face/main1.png';
-const FACE_BLINK   = ['face/main2.png','face/main3.png','face/main8.png'];
-const FACE_EMOTION = ['face/main5.png','face/main6.png','face/main7.png'];
-let faceAnimLock = false;
+const faceOverlay    = document.getElementById('face-overlay');
+const faceOverlayImg = document.getElementById('face-overlay-img');
 
-function scheduleBlink(){
-  const delay = 4000 + Math.random() * 8000; // 4〜12秒
+// 画像プリロード
+['face/main2.png','face/main3.png','face/main5.png',
+ 'face/main6.png','face/main7.png','face/main8.png'].forEach(src=>{
+  const i=new Image(); i.src=src;
+});
+
+let blinkLocked = false; // まばたき中はランダム表情を止める
+
+// オーバーレイ表示（speed: transition秒数）
+function showFace(src, fadeInSec, holdMs, fadeOutSec, onDone){
+  faceOverlayImg.src = src;
+  faceOverlay.style.transition = `opacity ${fadeInSec}s ease`;
+  faceOverlay.style.opacity = '1';
   setTimeout(()=>{
-    if(!faceAnimLock){
-      doBlink();
+    faceOverlay.style.transition = `opacity ${fadeOutSec}s ease`;
+    faceOverlay.style.opacity = '0';
+    if(onDone) setTimeout(onDone, fadeOutSec*1000);
+  }, holdMs);
+}
+
+// まばたきシーケンス: 2→3→8 を素早く繋いで自然なまばたきを演出
+function doBlink(){
+  if(blinkLocked) return;
+  blinkLocked = true;
+
+  // main2（目を細める） 60ms
+  faceOverlayImg.src = 'face/main2.png';
+  faceOverlay.style.transition = 'opacity 0.04s ease';
+  faceOverlay.style.opacity = '1';
+
+  setTimeout(()=>{
+    // main3（完全に閉じる） 80ms
+    faceOverlayImg.src = 'face/main3.png';
+  }, 60);
+
+  setTimeout(()=>{
+    // main8（薄目で開き始め） 60ms
+    faceOverlayImg.src = 'face/main8.png';
+  }, 140);
+
+  setTimeout(()=>{
+    // 元に戻る
+    faceOverlay.style.transition = 'opacity 0.06s ease';
+    faceOverlay.style.opacity = '0';
+    setTimeout(()=>{ blinkLocked = false; }, 80);
+  }, 200);
+}
+
+// まばたきスケジューラ: 2〜6秒ごと、たまにダブルまばたき
+function scheduleBlink(){
+  const delay = 2000 + Math.random()*4000;
+  setTimeout(()=>{
+    doBlink();
+    // 30%の確率でダブルまばたき
+    if(Math.random() < 0.3){
+      setTimeout(doBlink, 350);
     }
     scheduleBlink();
   }, delay);
 }
 
-function doBlink(){
-  // まばたき: 0.1〜0.2秒間だけ切替、すぐ戻る
-  const blinkImg = rand(FACE_BLINK);
-  const blinkDur = 100 + Math.random() * 100; // 100〜200ms
-  mainImg.src = blinkImg;
-  setTimeout(()=>{ mainImg.src = FACE_NORMAL; }, blinkDur);
-}
-
-function scheduleEmotion(){
-  const delay = 30000 + Math.random() * 60000; // 30〜90秒
+// ランダム表情（5/6/7）: 20〜60秒ごとにたまに出現
+function scheduleRandomFace(){
+  const delay = 20000 + Math.random()*40000;
   setTimeout(()=>{
-    if(!faceAnimLock){
-      doEmotion();
+    if(!blinkLocked && !ufoRunning){
+      const faces = ['face/main5.png','face/main6.png','face/main7.png'];
+      showFace(rand(faces), 0.4, 3000+Math.random()*2000, 0.6);
     }
-    scheduleEmotion();
+    scheduleRandomFace();
   }, delay);
 }
 
-function doEmotion(){
-  faceAnimLock = true;
-  const emoImg = rand(FACE_EMOTION);
-  const emoDur = 3000 + Math.random() * 3000; // 3〜6秒
-  mainImg.src = emoImg;
-  setTimeout(()=>{
-    mainImg.src = FACE_NORMAL;
-    setTimeout(()=>{ faceAnimLock = false; }, 500);
-  }, emoDur);
-}
-
-// スケジュール開始
-scheduleBlink();
-scheduleEmotion();
+// 少し遅らせて開始（ページ読み込み後）
+setTimeout(scheduleBlink, 1500);
+setTimeout(scheduleRandomFace, 5000);
 
 // ============================================================
-// FACE click (会話)
+// 顔クリック
 // ============================================================
 const faceLines=[
   'ん〜……こんにちはだねぇ〜！',
@@ -330,11 +323,12 @@ const faceLines=[
 let faceIdx=0;
 document.getElementById('spot-face').addEventListener('click',()=>{
   beep(660,'sine',0.18,0.07);
+  doBlink();
   showBubble(faceLines[faceIdx++%faceLines.length]);
 });
 
 // ============================================================
-// LAP CAT
+// 膝の猫（5回でシェイク）
 // ============================================================
 const meows=['にゃー！','みゃー♪','ふにゃ〜','にゃん！','みゅー？'];
 let catClicks=0, catTimer=null;
@@ -342,15 +336,14 @@ document.getElementById('spot-cat').addEventListener('click',()=>{
   catClicks++;
   clearTimeout(catTimer);
   catTimer=setTimeout(()=>{ catClicks=0; },2500);
-
   if(catClicks>=5){
     beep(200,'sawtooth',0.5,0.2);
     showBubble('シャーーー！！');
-    const scene=document.getElementById('scene');
+    const sc=document.getElementById('scene');
     let n=0;
     const sh=setInterval(()=>{
-      scene.style.transform=n++%2?'translateX(6px)':'translateX(-6px)';
-      if(n>8){ clearInterval(sh); scene.style.transform=''; catClicks=0; }
+      sc.style.transform=n++%2?'translateX(6px)':'translateX(-6px)';
+      if(n>8){ clearInterval(sh); sc.style.transform=''; catClicks=0; }
     },50);
     return;
   }
@@ -359,7 +352,7 @@ document.getElementById('spot-cat').addEventListener('click',()=>{
 });
 
 // ============================================================
-// TV
+// テレビ
 // ============================================================
 const tvLines=['ジー……','（テトリスがやりたいなぁ）','ザザッ…','（UFO特集やってる）'];
 let tvIdx=0;
@@ -369,259 +362,186 @@ document.getElementById('spot-tv').addEventListener('click',()=>{
 });
 
 // ============================================================
-// MIKAN HAND
+// みかんの手
 // ============================================================
 let handBusy=false;
-
 function playHand(){
-  if(handBusy) return;
-  handBusy=true;
+  if(handBusy) return; handBusy=true;
   const el=document.getElementById('hand-sprite');
-
-  el.style.transition='none';
-  el.style.transform='translate(3%,2%)';
-  el.style.opacity='0';
-
-  requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
+  el.style.transition='none'; el.style.transform='translate(3%,2%)'; el.style.opacity='0';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
     el.style.transition='opacity 2.2s ease, transform 2.2s ease';
-    el.style.opacity='1';
-    el.style.transform='translate(0,0)';
-  }); });
-
+    el.style.opacity='1'; el.style.transform='translate(0,0)';
+  }));
   beep(180,'sine',0.4,0.04);
-
   setTimeout(()=>{
     el.style.transition='transform 0.25s ease';
     el.style.transform='translate(0.6%,-0.5%)';
     setTimeout(()=>{ el.style.transform='translate(0,0)'; },260);
     beep(240,'sine',0.2,0.05);
   },2600);
-
   setTimeout(()=>{
     el.style.transition='opacity 2.2s ease, transform 2.2s ease';
-    el.style.opacity='0';
-    el.style.transform='translate(3%,2%)';
+    el.style.opacity='0'; el.style.transform='translate(3%,2%)';
   },3600);
-
   setTimeout(()=>{ handBusy=false; },6000);
 }
-
-document.getElementById('spot-mikan').addEventListener('click',()=>{
-  showBubble('！？');
-  playHand();
-});
-
+document.getElementById('spot-mikan').addEventListener('click',()=>{ showBubble('！？'); playHand(); });
 function scheduleHand(){
-  setTimeout(()=>{ playHand(); scheduleHand(); }, 25000+Math.random()*40000);
+  setTimeout(()=>{ playHand(); scheduleHand(); },25000+Math.random()*40000);
 }
 scheduleHand();
 
 // ============================================================
-// KOTATSU CAT — コタツの布団下から飛び出す
-// preview.webp 赤線位置基準 (top:83%, left:42%)
+// コタツ猫 — preview.webpの赤線位置（コタツ天板直下）で出現
+// top:68%, left:30%, width:22% に設定済み
+// ポップアップしてこちらに向かってズーム→フェードアウト
 // ============================================================
 let kcatBusy=false;
-
 function playKotatsuCat(){
-  if(kcatBusy) return;
-  kcatBusy=true;
+  if(kcatBusy) return; kcatBusy=true;
   const el=document.getElementById('kcat-sprite');
-
-  // リセット: コタツの布団の内側に隠れている状態
+  // リセット: コタツ布団の下に隠れた状態
   el.style.transition='none';
-  el.style.transform='scale(0.5) translateY(60%)';
+  el.style.transform='translateY(60%)';
   el.style.opacity='0';
 
-  // フェーズ1: コタツ布団の縁から頭を出す
-  requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
-    el.style.transition='transform 0.35s cubic-bezier(0.34,1.4,0.64,1), opacity 0.25s';
-    el.style.transform='scale(0.85) translateY(0%)';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    // 布団をめくって飛び出す（上方向にポップ）
+    el.style.transition='transform 0.45s cubic-bezier(0.34,1.4,0.64,1), opacity 0.25s';
+    el.style.transform='translateY(0)';
     el.style.opacity='1';
-  }); });
-
+  }));
   beep(200,'sawtooth',0.35,0.13);
 
-  // フェーズ2: 少し待ってから一気に飛び出す
+  // こちらに向かってズームしながらフェードアウト
   setTimeout(()=>{
-    el.style.transition='transform 0.3s cubic-bezier(0.2,1.6,0.5,1), opacity 0.2s';
-    el.style.transform='scale(1.1) translateY(-10%)';
-    beep(300,'sawtooth',0.2,0.1);
-  },500);
-
-  // フェーズ3: 画面に向かって突進 (ズームアウト)
-  setTimeout(()=>{
-    el.style.transition='transform 1.4s cubic-bezier(0.5,0,0.9,0.4), opacity 1.0s ease 0.5s';
-    el.style.transform='scale(5.5) translateY(-40%)';
+    el.style.transition='transform 1.6s cubic-bezier(0.4,0,0.8,0.3), opacity 1.0s ease 0.5s';
+    el.style.transform='scale(6) translateY(-20%)';
     el.style.opacity='0';
-    beep(160,'sawtooth',0.6,0.15);
-    setTimeout(()=>beep(140,'sawtooth',0.4,0.1),250);
+    beep(160,'sawtooth',0.6,0.14);
+    setTimeout(()=>beep(140,'sawtooth',0.35,0.09),220);
   },900);
 
   setTimeout(()=>{
     el.style.transition='none';
-    el.style.transform='scale(0.5) translateY(60%)';
+    el.style.transform='translateY(60%)';
     kcatBusy=false;
-  },2700);
+  },2900);
 }
-
-document.getElementById('spot-kotatsu').addEventListener('click',()=>{
-  showBubble('！！');
-  playKotatsuCat();
-});
+document.getElementById('spot-kotatsu').addEventListener('click',()=>{ showBubble('！！'); playKotatsuCat(); });
 
 // ============================================================
-// LEFT WINDOW — UFO EVENT (全面改修)
-// UFO1〜UFO8を順番再生、最後にホワイトアウト
+// UFO — 左窓クリックでUFO1〜8のシーケンスアニメーション
+// UFO未出現時のみ発動。UFO8後に画面震え→ホワイトアウト→通常に戻る
 // ============================================================
-const UFO_FRAMES = [
+const ufoImages=[
   'UFO/UFO1.png','UFO/UFO2.png','UFO/UFO3.png','UFO/UFO4.png',
-  'UFO/UFO5.png','UFO/UFO6.png','UFO/UFO7.png','UFO/UFO8.png'
+  'UFO/UFO5.png','UFO/UFO6.png','UFO/UFO7.png','UFO/UFO8.png',
 ];
-let ufoRunning = false;
+// プリロード
+ufoImages.forEach(src=>{ const i=new Image(); i.src=src; });
+
+let ufoRunning=false;
+const ufoOverlay    = document.getElementById('ufo-scene-overlay');
+const ufoOverlayImg = document.getElementById('ufo-overlay-img');
+const whiteout      = document.getElementById('whiteout');
+const sceneEl       = document.getElementById('scene');
 
 function playUFOSound(){
-  try {
-    const ac = new(window.AudioContext||window.webkitAudioContext)();
-    const osc  = ac.createOscillator();
-    const lfo  = ac.createOscillator();
-    const lfoG = ac.createGain();
-    const gain = ac.createGain();
+  try{
+    const ac=getAC(); if(!ac) return;
+    const osc=ac.createOscillator(), lfo=ac.createOscillator(),
+          lfoG=ac.createGain(), gain=ac.createGain();
     lfo.connect(lfoG); lfoG.connect(osc.frequency);
     osc.connect(gain); gain.connect(ac.destination);
-    osc.type = 'sawtooth';
-    osc.frequency.value = 160;
-    lfo.frequency.value = 5;
-    lfoG.gain.value = 50;
-    gain.gain.setValueAtTime(0.12, ac.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 6);
+    osc.type='sawtooth'; osc.frequency.value=180;
+    lfo.frequency.value=6; lfoG.gain.value=60;
+    gain.gain.setValueAtTime(0.15,ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+6);
     lfo.start(); osc.start();
-    lfo.stop(ac.currentTime + 6);
-    osc.stop(ac.currentTime + 6);
+    lfo.stop(ac.currentTime+6); osc.stop(ac.currentTime+6);
   }catch(e){}
 }
 
-function playUFOEvent(){
+function shakeScene(times, interval, cb){
+  let n=0;
+  const sh=setInterval(()=>{
+    sceneEl.style.transform=n++%2?'translateX(7px) translateY(4px)':'translateX(-7px) translateY(-4px)';
+    if(n>times){ clearInterval(sh); sceneEl.style.transform=''; if(cb) cb(); }
+  }, interval);
+}
+
+function triggerUFO(){
   if(ufoRunning) return;
-  ufoRunning = true;
-
-  const overlay    = document.getElementById('ufo-overlay');
-  const animSprite = document.getElementById('ufo-anim-sprite');
-  const animImg    = document.getElementById('ufo-anim-img');
-  const whiteout   = document.getElementById('ufo-whiteout');
-
-  // UFO音
+  ufoRunning=true;
   playUFOSound();
-  showBubble('…窓の外に何かいる');
+  showBubble('…窓の外に何かいる！');
 
-  // オーバーレイ表示開始
-  overlay.style.display = 'block';
+  let frame=0;
 
-  // UFO初期状態: 小さく遠くに (UFO1から開始)
-  animImg.src = UFO_FRAMES[0];
-  animSprite.style.transition = 'none';
-  // 最初は小さく表示 (遠くにいる演出)
-  animSprite.style.width = '12%';
-  animSprite.style.top = '30%';
-  // 軽い浮遊アニメーション用
-  let floatDir = 1;
-  let floatTimer = null;
+  function showNextFrame(){
+    if(frame >= ufoImages.length){
+      // UFO8表示後：少し待って震え→ホワイトアウト
+      setTimeout(()=>{
+        shakeScene(16, 55, ()=>{
+          // ホワイトアウト
+          whiteout.style.transition='opacity 0.6s ease';
+          whiteout.style.opacity='1';
+          setTimeout(()=>{
+            // UFOオーバーレイを消す
+            ufoOverlay.style.transition='none';
+            ufoOverlay.style.opacity='0';
+            ufoOverlayImg.src='';
+            // ホワイトアウト解除
+            whiteout.style.transition='opacity 0.9s ease';
+            whiteout.style.opacity='0';
+            setTimeout(()=>{ ufoRunning=false; },1000);
+          },700);
+        });
+      },700);
+      return;
+    }
 
-  function startFloat(){
-    floatTimer = setInterval(()=>{
-      const curTop = parseFloat(animSprite.style.top)||30;
-      animSprite.style.transition = 'top 1.2s ease-in-out';
-      animSprite.style.top = (curTop + floatDir * 1.5) + '%';
-      floatDir *= -1;
-    }, 1200);
-  }
+    const src=ufoImages[frame];
+    frame++;
 
-  startFloat();
-
-  // フレーム順次再生 (各80〜120ms、徐々に接近=大きく)
-  const frameDurations = [100, 90, 100, 110, 100, 90, 100, 120];
-  // サイズ: UFO1(小)→UFO8(大) で徐々に接近演出
-  const frameSizes = ['12%','15%','19%','23%','27%','31%','35%','40%'];
-  const frameTops  = ['30%','30%','29%','29%','28%','27%','26%','25%'];
-
-  let frameIdx = 0;
-  let frameAccum = 0;
-
-  function nextFrame(){
-    if(frameIdx >= UFO_FRAMES.length) return;
-    animImg.src = UFO_FRAMES[frameIdx];
-    animSprite.style.transition = 'none';
-    animSprite.style.width = frameSizes[frameIdx];
-    animSprite.style.top   = frameTops[frameIdx];
-    const dur = frameDurations[frameIdx];
-    frameIdx++;
-    frameAccum += dur;
-    if(frameIdx < UFO_FRAMES.length){
-      setTimeout(nextFrame, dur);
+    if(frame===1){
+      // 最初はフェードイン
+      ufoOverlayImg.src=src;
+      ufoOverlay.style.transition='opacity 0.4s ease';
+      ufoOverlay.style.opacity='1';
+      setTimeout(showNextFrame, 600);
+    } else if(frame<=6){
+      // UFO2〜6: クロスフェード（UFOが近づいてくる）
+      // 徐々にフレームを速くしてスピード感
+      const dur = 600 - (frame-1)*40; // 560→360ms
+      ufoOverlay.style.transition='opacity 0.12s ease';
+      ufoOverlay.style.opacity='0.75';
+      setTimeout(()=>{
+        ufoOverlayImg.src=src;
+        ufoOverlay.style.transition='opacity 0.12s ease';
+        ufoOverlay.style.opacity='1';
+      },120);
+      setTimeout(showNextFrame, dur);
+    } else {
+      // UFO7〜8: さらに速く（迫ってくる）
+      ufoOverlay.style.transition='opacity 0.08s ease';
+      ufoOverlay.style.opacity='0.7';
+      setTimeout(()=>{
+        ufoOverlayImg.src=src;
+        ufoOverlay.style.transition='opacity 0.08s ease';
+        ufoOverlay.style.opacity='1';
+      },80);
+      setTimeout(showNextFrame, 300);
     }
   }
-  nextFrame();
 
-  // UFO8到達後 (全フレーム計算: 合計 ~810ms)
-  const totalFrameTime = frameDurations.reduce((a,b)=>a+b,0); // ~810ms
-
-  // 画面振動 (1〜2秒)
-  setTimeout(()=>{
-    clearInterval(floatTimer);
-    beep(80,'sawtooth',1.5,0.18);
-    const scene = document.getElementById('scene');
-    let shakeCount = 0;
-    const shakeTotal = 20;
-    const shakeInt = setInterval(()=>{
-      const dx = (Math.random()-0.5)*12;
-      const dy = (Math.random()-0.5)*8;
-      scene.style.transform = `translate(${dx}px, ${dy}px)`;
-      document.body.style.transform = `translate(${(Math.random()-0.5)*6}px, ${(Math.random()-0.5)*4}px)`;
-      shakeCount++;
-      if(shakeCount >= shakeTotal){
-        clearInterval(shakeInt);
-        scene.style.transform = '';
-        document.body.style.transform = '';
-      }
-    }, 60);
-  }, totalFrameTime + 100);
-
-  // ホワイトアウト開始
-  const whiteoutStart = totalFrameTime + 100 + 1400;
-  setTimeout(()=>{
-    overlay.style.display = 'none';
-    whiteout.style.display = 'block';
-    requestAnimationFrame(()=>{
-      whiteout.style.transition = 'opacity 0.8s ease';
-      whiteout.style.opacity = '1';
-    });
-    beep(1200,'sine',0.4,0.06);
-  }, whiteoutStart);
-
-  // 完全白画面を0.5秒維持
-  setTimeout(()=>{
-    // 白から元の画面に戻す
-    whiteout.style.transition = 'opacity 0.6s ease';
-    whiteout.style.opacity = '0';
-    // 窓をUFO1に戻す
-    document.getElementById('ufo-window-img').src = 'UFO/UFO1.png';
-    showBubble('…消えた');
-  }, whiteoutStart + 800 + 500);
-
-  // whiteout非表示・完全リセット
-  setTimeout(()=>{
-    whiteout.style.display = 'none';
-    whiteout.style.opacity = '0';
-    whiteout.style.transition = 'none';
-    // UFO spriteリセット
-    animSprite.style.width = '12%';
-    animSprite.style.top = '30%';
-    ufoRunning = false;
-  }, whiteoutStart + 800 + 500 + 700);
+  showNextFrame();
 }
 
 document.getElementById('spot-window').addEventListener('click',()=>{
-  if(ufoRunning) return; // イベント実行中は再クリック無効
-  playUFOEvent();
+  if(!ufoRunning){ triggerUFO(); }
 });
 
 // ============================================================
@@ -630,213 +550,133 @@ document.getElementById('spot-window').addEventListener('click',()=>{
 document.getElementById('spot-disco').addEventListener('click',()=>{
   const p=42150+Math.round((Math.random()-0.5)*600);
   const c=((Math.random()-0.48)*3).toFixed(1);
-  const s=c>=0?'+':'';
   beep(880,'sine',0.12,0.07);
-  showBubble(`DISCO ¥${p.toLocaleString()} (${s}${c}%)`);
+  showBubble('DISCO ¥'+p.toLocaleString()+' ('+(c>=0?'+':'')+c+'%)');
 });
 
 // ============================================================
-// FAMICOM — open game
+// ファミコン
 // ============================================================
-document.getElementById('spot-fami').addEventListener('click',()=>{
-  beep(523,'square',0.12,0.07);
-  openGame();
-});
+document.getElementById('spot-fami').addEventListener('click',()=>{ beep(523,'square',0.12,0.07); openGame(); });
 
 // ============================================================
 // BREAKOUT
 // ============================================================
 let gameRaf=null, gameOn=false;
 const bk={
-  ball:{x:0,y:0,vx:3,vy:-4,r:5},
-  pad:{x:0,y:0,w:0,h:8,spd:0},
-  bricks:[], score:0, lives:3, hi:0,
-  state:'title', keys:{}, mouse:null,
+  ball:{x:0,y:0,vx:3,vy:-4,r:5}, pad:{x:0,y:0,w:0,h:8,spd:0},
+  bricks:[], score:0, lives:3, hi:0, state:'title', keys:{}, mouse:null,
 };
 
 function openGame(){
-  const ov=document.getElementById('game-overlay');
-  ov.classList.add('active');
+  document.getElementById('game-overlay').classList.add('active');
   gameOn=true;
-  const scene=document.getElementById('scene');
-  const topbar=document.getElementById('game-topbar');
-  const cv=document.getElementById('game-cv');
-  cv.width=scene.offsetWidth;
-  cv.height=Math.max(200, scene.offsetHeight - topbar.offsetHeight);
-  bk.hi=parseInt(store.get('bk_hi')||'0');
-  bk.state='title';
+  const sc=document.getElementById('scene'), tb=document.getElementById('game-topbar'), cv=document.getElementById('game-cv');
+  cv.width=sc.offsetWidth; cv.height=Math.max(200,sc.offsetHeight-tb.offsetHeight);
+  bk.hi=parseInt(store.get('bk_hi')||'0'); bk.state='title';
   if(!gameRaf) gameLoop();
 }
-
 window.closeGame=function(){
   document.getElementById('game-overlay').classList.remove('active');
-  if(gameRaf) cancelAnimationFrame(gameRaf);
-  gameRaf=null; gameOn=false;
+  if(gameRaf) cancelAnimationFrame(gameRaf); gameRaf=null; gameOn=false;
 };
-
 function initBricks(cv){
   bk.bricks=[];
-  const cols=8, rows=4, gx=6, gy=2;
-  const bw=(cv.width-gx*(cols+1))/cols;
-  const bh=Math.min(16,(cv.height*0.3)/rows);
-  for(let r=0;r<rows;r++)
-    for(let c=0;c<cols;c++)
-      bk.bricks.push({x:gx+c*(bw+gx), y:32+r*(bh+gy), w:bw, h:bh, alive:true, row:r});
+  const cols=8,rows=4,gx=6,gy=2;
+  const bw=(cv.width-gx*(cols+1))/cols, bh=Math.min(16,(cv.height*0.3)/rows);
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++)
+    bk.bricks.push({x:gx+c*(bw+gx),y:32+r*(bh+gy),w:bw,h:bh,alive:true,row:r});
 }
-
 function resetBall(cv){
   bk.ball.x=cv.width/2; bk.ball.y=cv.height-60;
-  const a=(Math.random()*0.6+0.2)*(Math.random()<0.5?1:-1);
-  const s=Math.min(cv.width,cv.height)*0.008+3;
-  bk.ball.vx=Math.cos(a)*s;
-  bk.ball.vy=-Math.abs(Math.sin(a)*s)-2;
+  const a=(Math.random()*0.6+0.2)*(Math.random()<0.5?1:-1), s=Math.min(cv.width,cv.height)*0.008+3;
+  bk.ball.vx=Math.cos(a)*s; bk.ball.vy=-Math.abs(Math.sin(a)*s)-2;
 }
-
 function initPlay(cv){
-  bk.pad.w=cv.width*0.18; bk.pad.h=8;
-  bk.pad.spd=cv.width*0.015;
-  bk.pad.x=cv.width/2-bk.pad.w/2;
-  bk.pad.y=cv.height-24;
-  bk.score=0; bk.lives=3;
-  initBricks(cv); resetBall(cv);
-  bk.state='play';
+  bk.pad.w=cv.width*0.18; bk.pad.h=8; bk.pad.spd=cv.width*0.015;
+  bk.pad.x=cv.width/2-bk.pad.w/2; bk.pad.y=cv.height-24;
+  bk.score=0; bk.lives=3; initBricks(cv); resetBall(cv); bk.state='play';
 }
-
 function drawDither(ctx,W,H){
   ctx.fillStyle='#000';
-  for(let x=0;x<W;x+=4){ ctx.fillRect(x,0,2,3); ctx.fillRect(x,H-3,2,3); }
-  for(let y=0;y<H;y+=4){ ctx.fillRect(0,y,3,2); ctx.fillRect(W-3,y,3,2); }
+  for(let x=0;x<W;x+=4){ctx.fillRect(x,0,2,3);ctx.fillRect(x,H-3,2,3);}
+  for(let y=0;y<H;y+=4){ctx.fillRect(0,y,3,2);ctx.fillRect(W-3,y,3,2);}
 }
-
 function gameLoop(){
-  if(!gameOn){ gameRaf=null; return; }
-  const cv=document.getElementById('game-cv');
-  const ctx=cv.getContext('2d');
-  const W=cv.width, H=cv.height;
+  if(!gameOn){gameRaf=null;return;}
+  const cv=document.getElementById('game-cv'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-
   if(bk.state==='title'){
     ctx.fillStyle='#000'; ctx.textAlign='center';
-    ctx.font=`bold ${Math.round(W*0.06)}px VT323,monospace`;
-    ctx.fillText('BLOCK KUZUSHI', W/2, H*0.35);
-    ctx.font=`${Math.round(W*0.04)}px VT323,monospace`;
-    ctx.fillText(`HI: ${bk.hi}`, W/2, H*0.5);
-    if(Math.floor(Date.now()/600)%2)
-      ctx.fillText('クリック or SPACE でスタート', W/2, H*0.68);
-    ctx.textAlign='left';
-    drawDither(ctx,W,H);
+    ctx.font=`bold ${Math.round(W*0.06)}px VT323,monospace`; ctx.fillText('BLOCK KUZUSHI',W/2,H*0.35);
+    ctx.font=`${Math.round(W*0.04)}px VT323,monospace`; ctx.fillText('HI: '+bk.hi,W/2,H*0.5);
+    if(Math.floor(Date.now()/600)%2) ctx.fillText('クリック or SPACE でスタート',W/2,H*0.68);
+    ctx.textAlign='left'; drawDither(ctx,W,H);
   } else if(bk.state==='play'){
-    update(W,H); render(ctx,W,H);
+    gameUpdate(W,H); gameRender(ctx,W,H);
   } else {
     ctx.fillStyle='#000'; ctx.textAlign='center';
     ctx.font=`bold ${Math.round(W*0.07)}px VT323,monospace`;
-    ctx.fillText(bk.state==='over'?'GAME OVER':'STAGE CLEAR！', W/2, H*0.38);
+    ctx.fillText(bk.state==='over'?'GAME OVER':'STAGE CLEAR！',W/2,H*0.38);
     ctx.font=`${Math.round(W*0.045)}px VT323,monospace`;
-    ctx.fillText(`SCORE: ${bk.score}`, W/2, H*0.5);
-    ctx.fillText(`HI: ${bk.hi}`, W/2, H*0.6);
-    if(Math.floor(Date.now()/600)%2)
-      ctx.fillText('クリックでもういちど', W/2, H*0.73);
-    ctx.textAlign='left';
-    drawDither(ctx,W,H);
+    ctx.fillText('SCORE: '+bk.score,W/2,H*0.5); ctx.fillText('HI: '+bk.hi,W/2,H*0.6);
+    if(Math.floor(Date.now()/600)%2) ctx.fillText('クリックでもういちど',W/2,H*0.73);
+    ctx.textAlign='left'; drawDither(ctx,W,H);
   }
   gameRaf=requestAnimationFrame(gameLoop);
 }
-
-function update(W,H){
-  const b=bk.ball, p=bk.pad;
+function gameUpdate(W,H){
+  const b=bk.ball,p=bk.pad;
   if(bk.keys['ArrowLeft']||bk.keys['a']) p.x=Math.max(0,p.x-p.spd);
   if(bk.keys['ArrowRight']||bk.keys['d']) p.x=Math.min(W-p.w,p.x+p.spd);
   if(bk.mouse!==null) p.x=Math.max(0,Math.min(W-p.w,bk.mouse-p.w/2));
-
   b.x+=b.vx; b.y+=b.vy;
-  if(b.x-b.r<0){ b.x=b.r; b.vx=Math.abs(b.vx); }
-  if(b.x+b.r>W){ b.x=W-b.r; b.vx=-Math.abs(b.vx); }
-  if(b.y-b.r<0){ b.y=b.r; b.vy=Math.abs(b.vy); beep(660,'square',0.05,0.05); }
-
+  if(b.x-b.r<0){b.x=b.r;b.vx=Math.abs(b.vx);}
+  if(b.x+b.r>W){b.x=W-b.r;b.vx=-Math.abs(b.vx);}
+  if(b.y-b.r<0){b.y=b.r;b.vy=Math.abs(b.vy);beep(660,'square',0.05,0.05);}
   if(b.y>H+20){
-    bk.lives--;
-    beep(150,'sawtooth',0.3,0.1);
-    if(bk.lives<=0){
-      bk.state='over';
-      if(bk.score>bk.hi){ bk.hi=bk.score; store.set('bk_hi',bk.hi); }
-      return;
-    }
-    resetBall(document.getElementById('game-cv'));
-    return;
+    bk.lives--; beep(150,'sawtooth',0.3,0.1);
+    if(bk.lives<=0){ bk.state='over'; if(bk.score>bk.hi){bk.hi=bk.score;store.set('bk_hi',bk.hi);} return; }
+    resetBall(document.getElementById('game-cv')); return;
   }
-
-  if(b.y+b.r>p.y && b.y+b.r<p.y+p.h && b.x>p.x && b.x<p.x+p.w){
-    b.vy=-Math.abs(b.vy);
-    b.vx=((b.x-(p.x+p.w/2))/(p.w/2))*5;
-    beep(440,'square',0.06,0.06);
+  if(b.y+b.r>p.y&&b.y+b.r<p.y+p.h&&b.x>p.x&&b.x<p.x+p.w){
+    b.vy=-Math.abs(b.vy); b.vx=((b.x-(p.x+p.w/2))/(p.w/2))*5; beep(440,'square',0.06,0.06);
   }
-
   for(const br of bk.bricks){
     if(!br.alive) continue;
-    if(b.x+b.r>br.x && b.x-b.r<br.x+br.w && b.y+b.r>br.y && b.y-b.r<br.y+br.h){
-      br.alive=false; b.vy=-b.vy; bk.score+=10;
-      beep(rand([523,659,784]),'square',0.05,0.05);
+    if(b.x+b.r>br.x&&b.x-b.r<br.x+br.w&&b.y+b.r>br.y&&b.y-b.r<br.y+br.h){
+      br.alive=false; b.vy=-b.vy; bk.score+=10; beep(rand([523,659,784]),'square',0.05,0.05);
     }
   }
-
-  if(bk.bricks.every(br=>!br.alive)){
-    bk.state='clear';
-    if(bk.score>bk.hi){ bk.hi=bk.score; store.set('bk_hi',bk.hi); }
-  }
+  if(bk.bricks.every(br=>!br.alive)){ bk.state='clear'; if(bk.score>bk.hi){bk.hi=bk.score;store.set('bk_hi',bk.hi);} }
 }
-
-function render(ctx,W,H){
-  const b=bk.ball, p=bk.pad;
-  const fills=['#000','#555','#888','#bbb'];
+function gameRender(ctx,W,H){
+  const b=bk.ball,p=bk.pad,fills=['#000','#555','#888','#bbb'];
   bk.bricks.forEach(br=>{
-    if(!br.alive) return;
-    ctx.fillStyle=fills[br.row%4];
-    ctx.fillRect(br.x,br.y,br.w,br.h);
-    ctx.fillStyle='#fff';
-    ctx.fillRect(br.x+2,br.y+2,br.w-4,2);
+    if(!br.alive)return;
+    ctx.fillStyle=fills[br.row%4]; ctx.fillRect(br.x,br.y,br.w,br.h);
+    ctx.fillStyle='#fff'; ctx.fillRect(br.x+2,br.y+2,br.w-4,2);
   });
-  ctx.fillStyle='#000';
-  ctx.fillRect(p.x,p.y,p.w,p.h);
-  ctx.fillStyle='#fff';
-  ctx.fillRect(p.x+2,p.y+1,p.w-4,2);
-  ctx.fillStyle='#000';
-  ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#000'; ctx.fillRect(p.x,p.y,p.w,p.h);
+  ctx.fillStyle='#fff'; ctx.fillRect(p.x+2,p.y+1,p.w-4,2);
+  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
   ctx.font=`${Math.round(W*0.038)}px VT323,monospace`;
-  ctx.fillText(`SCORE ${bk.score}`,6,22);
-  ctx.textAlign='center'; ctx.fillText(`HI ${bk.hi}`,W/2,22);
+  ctx.fillText('SCORE '+bk.score,6,22);
+  ctx.textAlign='center'; ctx.fillText('HI '+bk.hi,W/2,22);
   ctx.textAlign='right'; ctx.fillText('♥'.repeat(bk.lives),W-6,22);
-  ctx.textAlign='left';
-  drawDither(ctx,W,H);
+  ctx.textAlign='left'; drawDither(ctx,W,H);
 }
-
 document.addEventListener('keydown',e=>{
   bk.keys[e.key]=true;
-  if(e.key===' ' && gameOn){ e.preventDefault(); gameAction(); }
+  if(e.key===' '&&gameOn){e.preventDefault();gameAction();}
 });
 document.addEventListener('keyup',e=>{ bk.keys[e.key]=false; });
-
 const gcv=document.getElementById('game-cv');
-gcv.addEventListener('click', gameAction);
-gcv.addEventListener('mousemove',e=>{
-  const r=gcv.getBoundingClientRect();
-  bk.mouse=(e.clientX-r.left)*(gcv.width/r.width);
-});
-gcv.addEventListener('touchmove',e=>{
-  e.preventDefault();
-  const r=gcv.getBoundingClientRect();
-  bk.mouse=(e.touches[0].clientX-r.left)*(gcv.width/r.width);
-},{passive:false});
-gcv.addEventListener('touchstart',e=>{
-  const r=gcv.getBoundingClientRect();
-  bk.mouse=(e.touches[0].clientX-r.left)*(gcv.width/r.width);
-  gameAction();
-});
-
-function gameAction(){
-  if(!gameOn) return;
-  if(bk.state!=='play') initPlay(document.getElementById('game-cv'));
-}
-
+gcv.addEventListener('click',gameAction);
+gcv.addEventListener('mousemove',e=>{ const r=gcv.getBoundingClientRect(); bk.mouse=(e.clientX-r.left)*(gcv.width/r.width); });
+gcv.addEventListener('touchmove',e=>{ e.preventDefault(); const r=gcv.getBoundingClientRect(); bk.mouse=(e.touches[0].clientX-r.left)*(gcv.width/r.width); },{passive:false});
+gcv.addEventListener('touchstart',e=>{ const r=gcv.getBoundingClientRect(); bk.mouse=(e.touches[0].clientX-r.left)*(gcv.width/r.width); gameAction(); });
+function gameAction(){ if(!gameOn)return; if(bk.state!=='play') initPlay(document.getElementById('game-cv')); }
 </script>
 </body>
 </html>
