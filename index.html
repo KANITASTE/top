@@ -726,12 +726,12 @@ function gameLoop(){
       ctx.fillText(m.t,W/2,m.y);
     });
 
-    // CLICKでタイトルへ（これだけ点滅。区切り線は表示しない）
+    // CLICKでタイトルへ（これだけ点滅。黒文字＋白縁取りで視認性確保）
     ctx.font=`${Math.round(W*0.036)}px VT323,monospace`;
     if(blink){
       ctx.lineWidth=2.5;
-      ctx.strokeStyle='#000'; ctx.strokeText('CLICK でタイトルへ',W/2,H*0.85);
-      ctx.fillStyle='#fff'; ctx.fillText('CLICK でタイトルへ',W/2,H*0.85);
+      ctx.strokeStyle='#fff'; ctx.strokeText('CLICK でタイトルへ',W/2,H*0.85);
+      ctx.fillStyle='#000'; ctx.fillText('CLICK でタイトルへ',W/2,H*0.85);
     }
     ctx.textAlign='left';
 
@@ -758,12 +758,6 @@ function gameLoop(){
     ctx.fillStyle='#000';
     ctx.font=`${Math.round(W*0.034)}px VT323,monospace`;
     if(Math.floor(Date.now()/600)%2) ctx.fillText('クリック or SPACE でスタート',W/2,H*0.93);
-    // 隠しコマンド表示（タイトル左上に薄く）
-    ctx.fillStyle='rgba(0,0,0,0.12)';
-    ctx.font=`${Math.round(W*0.025)}px VT323,monospace`;
-    ctx.textAlign='left';
-    ctx.fillText('[F] = 花火プレビュー',4,H-6);
-    ctx.textAlign='left';
     drawDither(ctx,W,H);
 
   } else if(bk.state==='play'){
