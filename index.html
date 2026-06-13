@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KANITASTE</title>
-<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Noto+Sans+JP:wght@300&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
@@ -58,7 +58,7 @@ body {
 /* ホットスポット */
 .spot {
   position: absolute;
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ctext y='16' font-size='16' fill='%23000'%3E%2B%3C/text%3E%3C/svg%3E") 10 10, crosshair;
+  cursor: url("data:image/png;base64,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") 10 2, pointer;
 }
 #spot-face    { top:14%; left:50%; width:30%; height:30%; border-radius:50%; }
 #spot-cat     { top:54%; left:58%; width:22%; height:26%; }
@@ -119,13 +119,25 @@ body {
 
 /* info */
 #info { width: 100%; max-width: 640px; margin-top: 24px; padding: 0 4px; }
-.years { font-size: clamp(13px,2.5vw,17px); color: #888; line-height: 2.2; margin-bottom: 14px; }
+.years {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 300;
+  font-size: clamp(13px,2vw,15px);
+  color: #888; line-height: 2.4; margin-bottom: 14px;
+  text-align: left;
+  display: table; margin-left: auto; margin-right: auto;
+}
 .years a { color:#888; text-decoration:none; border-bottom:1px solid #ccc; }
 .years a:hover { color:#000; border-color:#000; }
-.links { display:flex; gap:16px; flex-wrap:wrap; }
+.links {
+  display: flex; gap:20px; flex-wrap:wrap;
+  justify-content: center;
+}
 .links a {
-  font-size: clamp(16px,3vw,22px); color:#000;
-  text-decoration:none; border-bottom:2px solid #000; padding-bottom:1px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 300;
+  font-size: clamp(14px,2vw,16px); color:#000;
+  text-decoration:none; border-bottom:1px solid #000; padding-bottom:1px;
 }
 .links a:hover { background:#000; color:#fff; }
 @media(max-width:480px){ body{padding:20px 12px 48px;} }
