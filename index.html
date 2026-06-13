@@ -582,7 +582,7 @@ function openGame(){
 window.closeGame=function(){
   document.getElementById('game-overlay').classList.remove('active');
   if(gameRaf) cancelAnimationFrame(gameRaf); gameRaf=null; gameOn=false;
-  fireworks=[];
+  clearTimeout(fwTimer); fireworks=[];
 };
 
 function initBricks(cv){
@@ -651,19 +651,20 @@ function drawFireworks(ctx){
   ctx.globalAlpha=1;
 }
 
-// 花火スケジューラ
+// 花火スケジューラ — 終了せずずっと飛び続ける
 let fwTimer=null;
 let fwCount=0;
 function startFireworks(W,H){
   fwCount=0;
   function shoot(){
+    if(bk.state!=='fireworks') return; // 画面が変わったら停止
     launchFirework(W,H);
-    launchFirework(W,H);
+    if(Math.random()>0.3) launchFirework(W,H); // たまに2発同時
     fwCount++;
-    if(fwCount<12) fwTimer=setTimeout(shoot, 400+Math.random()*300);
+    fwTimer=setTimeout(shoot, 350+Math.random()*450);
   }
   shoot();
-  // 花火SE — Mac風シンプルなビープ
+  // 最初の数発だけSEを鳴らす
   [0,400,900,1400,2000].forEach(t=>setTimeout(()=>{ beep(1000,'square',0.15,0.1); setTimeout(()=>beep(700,'square',0.1,0.08),60); },t));
 }
 
@@ -675,15 +676,20 @@ function gameLoop(){
   const cv=document.getElementById('game-cv'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
 
   if(bk.state==='fireworks'){
-    // Old Macintosh風: 黒背景＋白ドット花火＋白文字（点滅で強弱）
-    ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+    // Old Macintosh風: 上から下へのグレートーン・グラデーション背景
+    const grad=ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,   '#3a3a3a');
+    grad.addColorStop(0.5, '#1c1c1c');
+    grad.addColorStop(1,   '#000000');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+
     updateFireworks();
     drawFireworks(ctx);
 
     const t=Date.now();
-    const blink = Math.floor(t/400)%2===0; // 点滅でMacのアラートダイアログ感
+    const blink = Math.floor(t/400)%2===0; // CLICK文字のみ点滅
 
-    // 多言語おめでとうテキスト（白固定、点滅で強調）
+    // 多言語おめでとうテキスト（常時表示・点滅なし）
     const msgs=[
       {t:'おめでとうございます！', f:'bold '+Math.round(W*0.062)+'px VT323,monospace', y:H*0.36},
       {t:'Congratulations!',        f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.48},
@@ -691,21 +697,15 @@ function gameLoop(){
       {t:'¡Felicidades!',           f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.68},
     ];
     ctx.textAlign='center';
-    msgs.forEach((m,i)=>{
-      // 1行ごとに白/黒のフチを入れ替えて視認性を確保し、Mac風の反転表示にする
-      ctx.fillStyle='#fff';
+    ctx.fillStyle='#fff';
+    msgs.forEach((m)=>{
       ctx.font=m.f; ctx.fillText(m.t,W/2,m.y);
     });
 
-    // 点滅する区切り線（ディザパターン風）
-    if(blink){
-      ctx.fillStyle='#fff';
-      for(let x=0;x<W;x+=4) ctx.fillRect(x,H*0.74,2,2);
-    }
-
+    // CLICKでタイトルへ（これだけ点滅。区切り線は表示しない）
     ctx.font=`${Math.round(W*0.036)}px VT323,monospace`;
-    ctx.fillStyle='#fff';
-    if(blink) ctx.fillText('CLICK でタイトルへ',W/2,H*0.85);
+    ctx.fillStyle = blink ? '#fff' : 'rgba(255,255,255,0)';
+    ctx.fillText('CLICK でタイトルへ',W/2,H*0.85);
     ctx.textAlign='left';
 
     // 画面外枠にディザボーダー（HyperCard風）
