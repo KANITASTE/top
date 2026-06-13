@@ -614,31 +614,25 @@ function drawDither(ctx,W,H){
   for(let y=0;y<H;y+=4){ctx.fillRect(0,y,3,2);ctx.fillRect(W-3,y,3,2);}
 }
 
-// Old Macintosh風1bitディザパターン背景
-// 上から下にかけて黒のドット密度を減らし、濃いグレー→薄いグレーに見せる
-const DITHER_PATTERNS = [
-  // 4x4 Bayerパターンに近い閾値マップ（値が小さいほど黒になりやすい）
-  [ 0,  8,  2, 10],
-  [12,  4, 14,  6],
-  [ 3, 11,  1,  9],
-  [15,  7, 13,  5],
-];
+// hand.png風スクリーントーン: グレー地に白い網点（ドット）を重ねて濃淡を表現
+// 上部=網点少なく暗い、下部=網点多く明るい
 function drawDitherGradient(ctx,W,H){
-  ctx.fillStyle='#fff';
+  // ベースはミッドグレー
+  ctx.fillStyle='#555';
   ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#000';
-  const cell=4; // ピクセルサイズ（粗いドット感を出す）
+
+  const cell=6; // 網点の格子サイズ
+  ctx.fillStyle='#fff';
   for(let y=0; y<H; y+=cell){
-    // 上(0)で黒密度高い(=明るさ低い)、下(H)で黒密度低い(=明るさ高い)
     const t = y/H; // 0(上)→1(下)
-    // 明るさレベル0〜16: 上は3〜5(濃いグレー)、下は12〜14(薄いグレー)
-    const level = Math.floor(3 + t*10);
+    // 網点の半径: 上はほぼ0(暗いまま)、下は大きく(明るくなる)
+    const maxR = cell*0.5;
+    const r = maxR * (0.08 + t*0.92);
+    if(r < 0.3) continue;
     for(let x=0; x<W; x+=cell){
-      const px=Math.floor(x/cell)%4, py=Math.floor(y/cell)%4;
-      const threshold = DITHER_PATTERNS[py][px];
-      if(threshold < level){
-        ctx.fillRect(x,y,cell,cell);
-      }
+      ctx.beginPath();
+      ctx.arc(x+cell/2, y+cell/2, r, 0, Math.PI*2);
+      ctx.fill();
     }
   }
 }
