@@ -706,9 +706,6 @@ function gameLoop(){
     updateFireworks();
     drawFireworks(ctx);
 
-    const t=Date.now();
-    const blink = Math.floor(t/400)%2===0; // CLICK文字のみ点滅
-
     // 多言語おめでとうテキスト（常時表示・点滅なし）— 白文字＋黒縁取りで視認性確保
     const msgs=[
       {t:'おめでとうございます！', f:'bold '+Math.round(W*0.062)+'px VT323,monospace', y:H*0.40},
@@ -726,13 +723,11 @@ function gameLoop(){
       ctx.fillText(m.t,W/2,m.y);
     });
 
-    // CLICKでタイトルへ（これだけ点滅。黒文字＋白縁取りで視認性確保）
-    ctx.font=`${Math.round(W*0.036)}px VT323,monospace`;
-    if(blink){
-      ctx.lineWidth=2.5;
-      ctx.strokeStyle='#fff'; ctx.strokeText('CLICK でタイトルへ',W/2,H*0.85);
-      ctx.fillStyle='#000'; ctx.fillText('CLICK でタイトルへ',W/2,H*0.85);
-    }
+    // CLICKでタイトルへ（常時表示・太字・黒文字＋白縁取りで視認性確保）
+    ctx.font=`bold ${Math.round(W*0.042)}px VT323,monospace`;
+    ctx.lineWidth=3;
+    ctx.strokeStyle='#fff'; ctx.strokeText('CLICK でタイトルへ',W/2,H*0.85);
+    ctx.fillStyle='#000'; ctx.fillText('CLICK でタイトルへ',W/2,H*0.85);
     ctx.textAlign='left';
 
     // 画面外枠にディザボーダー（HyperCard風）
