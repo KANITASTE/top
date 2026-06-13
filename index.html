@@ -559,71 +559,208 @@ document.getElementById('spot-disco').addEventListener('click',()=>{
 document.getElementById('spot-fami').addEventListener('click',()=>{ beep(523,'square',0.12,0.07); openGame(); });
 
 // ============================================================
-// BREAKOUT
+// BREAKOUT — Level 1〜5 + 花火エンディング
 // ============================================================
 let gameRaf=null, gameOn=false;
 const bk={
   ball:{x:0,y:0,vx:3,vy:-4,r:5}, pad:{x:0,y:0,w:0,h:8,spd:0},
-  bricks:[], score:0, lives:3, hi:0, state:'title', keys:{}, mouse:null,
+  bricks:[], score:0, lives:3, hi:0,
+  state:'title', // title|play|clear|over|fireworks
+  level:1, keys:{}, mouse:null,
 };
+
+// レベル設定: [rows, cols, speedMult, paddleWidthMult]
+const LEVELS=[
+  null, // index 0 unused
+  {rows:3, cols:7, spd:1.0, pw:0.20, label:'LEVEL 1'},
+  {rows:4, cols:8, spd:1.15, pw:0.18, label:'LEVEL 2'},
+  {rows:5, cols:8, spd:1.30, pw:0.16, label:'LEVEL 3'},
+  {rows:5, cols:9, spd:1.45, pw:0.14, label:'LEVEL 4'},
+  {rows:6, cols:9, spd:1.60, pw:0.12, label:'LEVEL 5 ★ FINAL'},
+];
+
+// 花火パーティクル
+let fireworks=[];
 
 function openGame(){
   document.getElementById('game-overlay').classList.add('active');
   gameOn=true;
   const sc=document.getElementById('scene'), tb=document.getElementById('game-topbar'), cv=document.getElementById('game-cv');
   cv.width=sc.offsetWidth; cv.height=Math.max(200,sc.offsetHeight-tb.offsetHeight);
-  bk.hi=parseInt(store.get('bk_hi')||'0'); bk.state='title';
+  bk.hi=parseInt(store.get('bk_hi')||'0');
+  bk.level=1; bk.state='title';
   if(!gameRaf) gameLoop();
 }
 window.closeGame=function(){
   document.getElementById('game-overlay').classList.remove('active');
   if(gameRaf) cancelAnimationFrame(gameRaf); gameRaf=null; gameOn=false;
+  fireworks=[];
 };
+
 function initBricks(cv){
   bk.bricks=[];
-  const cols=8,rows=4,gx=6,gy=2;
-  const bw=(cv.width-gx*(cols+1))/cols, bh=Math.min(16,(cv.height*0.3)/rows);
+  const lv=LEVELS[bk.level];
+  const cols=lv.cols, rows=lv.rows, gx=5, gy=2;
+  const bw=(cv.width-gx*(cols+1))/cols, bh=Math.min(14,(cv.height*0.32)/rows);
   for(let r=0;r<rows;r++) for(let c=0;c<cols;c++)
-    bk.bricks.push({x:gx+c*(bw+gx),y:32+r*(bh+gy),w:bw,h:bh,alive:true,row:r});
+    bk.bricks.push({x:gx+c*(bw+gx), y:34+r*(bh+gy), w:bw, h:bh, alive:true, row:r});
 }
 function resetBall(cv){
   bk.ball.x=cv.width/2; bk.ball.y=cv.height-60;
-  const a=(Math.random()*0.6+0.2)*(Math.random()<0.5?1:-1), s=Math.min(cv.width,cv.height)*0.008+3;
-  bk.ball.vx=Math.cos(a)*s; bk.ball.vy=-Math.abs(Math.sin(a)*s)-2;
+  const lv=LEVELS[bk.level];
+  const a=(Math.random()*0.6+0.2)*(Math.random()<0.5?1:-1);
+  const s=(Math.min(cv.width,cv.height)*0.008+3)*lv.spd;
+  bk.ball.vx=Math.cos(a)*s; bk.ball.vy=-Math.abs(Math.sin(a)*s)-2*lv.spd;
 }
-function initPlay(cv){
-  bk.pad.w=cv.width*0.18; bk.pad.h=8; bk.pad.spd=cv.width*0.015;
+function initPlay(cv, keepScore){
+  const lv=LEVELS[bk.level];
+  bk.pad.w=cv.width*lv.pw; bk.pad.h=8; bk.pad.spd=cv.width*0.016;
   bk.pad.x=cv.width/2-bk.pad.w/2; bk.pad.y=cv.height-24;
-  bk.score=0; bk.lives=3; initBricks(cv); resetBall(cv); bk.state='play';
+  if(!keepScore){ bk.score=0; bk.lives=3; }
+  initBricks(cv); resetBall(cv); bk.state='play';
 }
+
 function drawDither(ctx,W,H){
   ctx.fillStyle='#000';
   for(let x=0;x<W;x+=4){ctx.fillRect(x,0,2,3);ctx.fillRect(x,H-3,2,3);}
   for(let y=0;y<H;y+=4){ctx.fillRect(0,y,3,2);ctx.fillRect(W-3,y,3,2);}
 }
+
+// ============================================================
+// 花火エフェクト
+// ============================================================
+function launchFirework(W,H){
+  const x=W*0.1+Math.random()*W*0.8;
+  const y=H*0.1+Math.random()*H*0.5;
+  const hue=Math.floor(Math.random()*360);
+  const count=60+Math.floor(Math.random()*40);
+  for(let i=0;i<count;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=2+Math.random()*5;
+    fireworks.push({
+      x,y,
+      vx:Math.cos(angle)*speed,
+      vy:Math.sin(angle)*speed,
+      life:1.0,
+      decay:0.012+Math.random()*0.012,
+      hue: hue+Math.random()*40-20,
+      size:2+Math.random()*2,
+    });
+  }
+}
+
+function updateFireworks(){ fireworks=fireworks.filter(f=>f.life>0); fireworks.forEach(f=>{ f.x+=f.vx; f.y+=f.vy; f.vy+=0.08; f.vx*=0.97; f.life-=f.decay; }); }
+
+function drawFireworks(ctx){ fireworks.forEach(f=>{ ctx.globalAlpha=Math.max(0,f.life); ctx.fillStyle=`hsl(${f.hue},100%,60%)`; ctx.beginPath(); ctx.arc(f.x,f.y,f.size,0,Math.PI*2); ctx.fill(); }); ctx.globalAlpha=1; }
+
+// 花火スケジューラ
+let fwTimer=null;
+let fwCount=0;
+function startFireworks(W,H){
+  fwCount=0;
+  function shoot(){
+    launchFirework(W,H);
+    launchFirework(W,H);
+    fwCount++;
+    if(fwCount<12) fwTimer=setTimeout(shoot, 400+Math.random()*300);
+  }
+  shoot();
+  // 花火SE
+  [0,400,900,1400,2000].forEach(t=>setTimeout(()=>{ beep(880,'sine',0.3,0.15); setTimeout(()=>beep(1100,'sine',0.2,0.1),80); },t));
+}
+
+// ============================================================
+// GAME LOOP
+// ============================================================
 function gameLoop(){
   if(!gameOn){gameRaf=null;return;}
   const cv=document.getElementById('game-cv'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+
+  if(bk.state==='fireworks'){
+    // 黒背景に花火
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+    updateFireworks();
+    drawFireworks(ctx);
+    // 多言語おめでとうテキスト
+    const msgs=[
+      {t:'おめでとうございます！', f:'bold '+Math.round(W*0.062)+'px VT323,monospace', y:H*0.38},
+      {t:'Congratulations!',        f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.50},
+      {t:'恭喜恭喜！',              f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.60},
+      {t:'¡Felicidades!',           f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.70},
+    ];
+    ctx.textAlign='center';
+    const t=Date.now();
+    msgs.forEach((m,i)=>{
+      // 虹色で点滅
+      ctx.fillStyle=`hsl(${(t/20+i*60)%360},100%,65%)`;
+      ctx.font=m.f; ctx.fillText(m.t,W/2,m.y);
+    });
+    ctx.font=`${Math.round(W*0.036)}px VT323,monospace`;
+    ctx.fillStyle='#aaa';
+    if(Math.floor(t/700)%2) ctx.fillText('クリックでタイトルへ',W/2,H*0.85);
+    ctx.textAlign='left';
+    gameRaf=requestAnimationFrame(gameLoop);
+    return;
+  }
+
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+
   if(bk.state==='title'){
     ctx.fillStyle='#000'; ctx.textAlign='center';
-    ctx.font=`bold ${Math.round(W*0.06)}px VT323,monospace`; ctx.fillText('BLOCK KUZUSHI',W/2,H*0.35);
-    ctx.font=`${Math.round(W*0.04)}px VT323,monospace`; ctx.fillText('HI: '+bk.hi,W/2,H*0.5);
-    if(Math.floor(Date.now()/600)%2) ctx.fillText('クリック or SPACE でスタート',W/2,H*0.68);
-    ctx.textAlign='left'; drawDither(ctx,W,H);
+    ctx.font=`bold ${Math.round(W*0.06)}px VT323,monospace`;
+    ctx.fillText('BLOCK KUZUSHI',W/2,H*0.28);
+    ctx.font=`${Math.round(W*0.038)}px VT323,monospace`;
+    ctx.fillText('HI: '+bk.hi,W/2,H*0.42);
+    // レベル選択表示
+    for(let i=1;i<=5;i++){
+      ctx.fillStyle= i===bk.level ? '#000':'#bbb';
+      ctx.fillText('LEVEL '+i+(i===5?' ★':''),W/2, H*(0.52+i*0.072));
+    }
+    ctx.fillStyle='#000';
+    ctx.font=`${Math.round(W*0.034)}px VT323,monospace`;
+    if(Math.floor(Date.now()/600)%2) ctx.fillText('クリック or SPACE でスタート',W/2,H*0.93);
+    // 隠しコマンド表示（タイトル左上に薄く）
+    ctx.fillStyle='rgba(0,0,0,0.12)';
+    ctx.font=`${Math.round(W*0.025)}px VT323,monospace`;
+    ctx.textAlign='left';
+    ctx.fillText('[F] = 花火プレビュー',4,H-6);
+    ctx.textAlign='left';
+    drawDither(ctx,W,H);
+
   } else if(bk.state==='play'){
     gameUpdate(W,H); gameRender(ctx,W,H);
-  } else {
+
+  } else if(bk.state==='clear'){
+    ctx.fillStyle='#000'; ctx.textAlign='center';
+    ctx.font=`bold ${Math.round(W*0.065)}px VT323,monospace`;
+    ctx.fillText('STAGE CLEAR！',W/2,H*0.30);
+    ctx.font=`bold ${Math.round(W*0.045)}px VT323,monospace`;
+    ctx.fillText(LEVELS[bk.level].label+' CLEAR',W/2,H*0.44);
+    ctx.font=`${Math.round(W*0.038)}px VT323,monospace`;
+    ctx.fillText('SCORE: '+bk.score,W/2,H*0.56);
+    if(bk.level<5){
+      ctx.fillText('NEXT: LEVEL '+(bk.level+1),W/2,H*0.66);
+      if(Math.floor(Date.now()/600)%2) ctx.fillText('クリックで次のレベルへ',W/2,H*0.79);
+    } else {
+      if(Math.floor(Date.now()/600)%2) ctx.fillText('クリックで花火を見る！',W/2,H*0.79);
+    }
+    ctx.textAlign='left'; drawDither(ctx,W,H);
+
+  } else if(bk.state==='over'){
     ctx.fillStyle='#000'; ctx.textAlign='center';
     ctx.font=`bold ${Math.round(W*0.07)}px VT323,monospace`;
-    ctx.fillText(bk.state==='over'?'GAME OVER':'STAGE CLEAR！',W/2,H*0.38);
-    ctx.font=`${Math.round(W*0.045)}px VT323,monospace`;
-    ctx.fillText('SCORE: '+bk.score,W/2,H*0.5); ctx.fillText('HI: '+bk.hi,W/2,H*0.6);
-    if(Math.floor(Date.now()/600)%2) ctx.fillText('クリックでもういちど',W/2,H*0.73);
+    ctx.fillText('GAME OVER',W/2,H*0.35);
+    ctx.font=`${Math.round(W*0.042)}px VT323,monospace`;
+    ctx.fillText(LEVELS[bk.level].label,W/2,H*0.47);
+    ctx.fillText('SCORE: '+bk.score,W/2,H*0.57);
+    ctx.fillText('HI: '+bk.hi,W/2,H*0.67);
+    if(Math.floor(Date.now()/600)%2) ctx.fillText('クリックでもういちど',W/2,H*0.80);
     ctx.textAlign='left'; drawDither(ctx,W,H);
   }
+
   gameRaf=requestAnimationFrame(gameLoop);
 }
+
 function gameUpdate(W,H){
   const b=bk.ball,p=bk.pad;
   if(bk.keys['ArrowLeft']||bk.keys['a']) p.x=Math.max(0,p.x-p.spd);
@@ -635,47 +772,97 @@ function gameUpdate(W,H){
   if(b.y-b.r<0){b.y=b.r;b.vy=Math.abs(b.vy);beep(660,'square',0.05,0.05);}
   if(b.y>H+20){
     bk.lives--; beep(150,'sawtooth',0.3,0.1);
-    if(bk.lives<=0){ bk.state='over'; if(bk.score>bk.hi){bk.hi=bk.score;store.set('bk_hi',bk.hi);} return; }
+    if(bk.lives<=0){
+      bk.state='over';
+      if(bk.score>bk.hi){bk.hi=bk.score;store.set('bk_hi',bk.hi);}
+      return;
+    }
     resetBall(document.getElementById('game-cv')); return;
   }
   if(b.y+b.r>p.y&&b.y+b.r<p.y+p.h&&b.x>p.x&&b.x<p.x+p.w){
-    b.vy=-Math.abs(b.vy); b.vx=((b.x-(p.x+p.w/2))/(p.w/2))*5; beep(440,'square',0.06,0.06);
+    b.vy=-Math.abs(b.vy); b.vx=((b.x-(p.x+p.w/2))/(p.w/2))*5.5; beep(440,'square',0.06,0.06);
   }
   for(const br of bk.bricks){
     if(!br.alive) continue;
     if(b.x+b.r>br.x&&b.x-b.r<br.x+br.w&&b.y+b.r>br.y&&b.y-b.r<br.y+br.h){
-      br.alive=false; b.vy=-b.vy; bk.score+=10; beep(rand([523,659,784]),'square',0.05,0.05);
+      br.alive=false; b.vy=-b.vy;
+      bk.score+=10*bk.level; // レベルが高いほど高得点
+      beep(rand([523,659,784]),'square',0.05,0.05);
     }
   }
-  if(bk.bricks.every(br=>!br.alive)){ bk.state='clear'; if(bk.score>bk.hi){bk.hi=bk.score;store.set('bk_hi',bk.hi);} }
+  if(bk.bricks.every(br=>!br.alive)){
+    bk.state='clear';
+    if(bk.score>bk.hi){bk.hi=bk.score;store.set('bk_hi',bk.hi);}
+  }
 }
+
 function gameRender(ctx,W,H){
-  const b=bk.ball,p=bk.pad,fills=['#000','#555','#888','#bbb'];
+  const b=bk.ball,p=bk.pad;
+  // レベルに応じたカラーパレット（モノクロベース）
+  const palettes=[
+    ['#000','#444','#888','#bbb','#ddd','#000'],
+    ['#000','#222','#555','#888','#aaa','#ccc'],
+    ['#111','#333','#666','#999','#bbb','#ddd'],
+    ['#000','#333','#555','#777','#999','#bbb'],
+    ['#000','#111','#333','#555','#777','#999'],
+  ];
+  const fills=palettes[bk.level-1]||palettes[0];
   bk.bricks.forEach(br=>{
     if(!br.alive)return;
-    ctx.fillStyle=fills[br.row%4]; ctx.fillRect(br.x,br.y,br.w,br.h);
-    ctx.fillStyle='#fff'; ctx.fillRect(br.x+2,br.y+2,br.w-4,2);
+    ctx.fillStyle=fills[br.row%fills.length]; ctx.fillRect(br.x,br.y,br.w,br.h);
+    ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.fillRect(br.x+2,br.y+2,br.w-4,2);
   });
   ctx.fillStyle='#000'; ctx.fillRect(p.x,p.y,p.w,p.h);
   ctx.fillStyle='#fff'; ctx.fillRect(p.x+2,p.y+1,p.w-4,2);
   ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
   ctx.font=`${Math.round(W*0.038)}px VT323,monospace`;
   ctx.fillText('SCORE '+bk.score,6,22);
-  ctx.textAlign='center'; ctx.fillText('HI '+bk.hi,W/2,22);
+  ctx.textAlign='center';
+  ctx.fillText(LEVELS[bk.level].label,W/2,22);
   ctx.textAlign='right'; ctx.fillText('♥'.repeat(bk.lives),W-6,22);
   ctx.textAlign='left'; drawDither(ctx,W,H);
 }
+
 document.addEventListener('keydown',e=>{
   bk.keys[e.key]=true;
   if(e.key===' '&&gameOn){e.preventDefault();gameAction();}
+  // 隠しコマンド: タイトル画面で [F] キー → 花火プレビュー
+  if(e.key==='f'&&gameOn&&bk.state==='title'){
+    const cv=document.getElementById('game-cv');
+    bk.state='fireworks'; fireworks=[];
+    startFireworks(cv.width,cv.height);
+  }
 });
 document.addEventListener('keyup',e=>{ bk.keys[e.key]=false; });
+
 const gcv=document.getElementById('game-cv');
 gcv.addEventListener('click',gameAction);
 gcv.addEventListener('mousemove',e=>{ const r=gcv.getBoundingClientRect(); bk.mouse=(e.clientX-r.left)*(gcv.width/r.width); });
 gcv.addEventListener('touchmove',e=>{ e.preventDefault(); const r=gcv.getBoundingClientRect(); bk.mouse=(e.touches[0].clientX-r.left)*(gcv.width/r.width); },{passive:false});
 gcv.addEventListener('touchstart',e=>{ const r=gcv.getBoundingClientRect(); bk.mouse=(e.touches[0].clientX-r.left)*(gcv.width/r.width); gameAction(); });
-function gameAction(){ if(!gameOn)return; if(bk.state!=='play') initPlay(document.getElementById('game-cv')); }
+
+function gameAction(){
+  if(!gameOn) return;
+  const cv=document.getElementById('game-cv');
+  if(bk.state==='title'){ bk.level=1; initPlay(cv,false); }
+  else if(bk.state==='play'){} // 何もしない
+  else if(bk.state==='over'){ initPlay(cv,false); }
+  else if(bk.state==='clear'){
+    if(bk.level<5){
+      bk.level++;
+      initPlay(cv,true); // スコア・ライフ引き継ぎ
+    } else {
+      // レベル5クリア → 花火！
+      bk.state='fireworks'; fireworks=[];
+      startFireworks(cv.width,cv.height);
+    }
+  }
+  else if(bk.state==='fireworks'){
+    // タイトルに戻る
+    clearTimeout(fwTimer); fireworks=[];
+    bk.level=1; bk.state='title';
+  }
+}
 </script>
 </body>
 </html>
