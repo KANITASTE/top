@@ -614,6 +614,35 @@ function drawDither(ctx,W,H){
   for(let y=0;y<H;y+=4){ctx.fillRect(0,y,3,2);ctx.fillRect(W-3,y,3,2);}
 }
 
+// Old Macintosh風1bitディザパターン背景
+// 上から下にかけて黒のドット密度を減らし、濃いグレー→薄いグレーに見せる
+const DITHER_PATTERNS = [
+  // 4x4 Bayerパターンに近い閾値マップ（値が小さいほど黒になりやすい）
+  [ 0,  8,  2, 10],
+  [12,  4, 14,  6],
+  [ 3, 11,  1,  9],
+  [15,  7, 13,  5],
+];
+function drawDitherGradient(ctx,W,H){
+  ctx.fillStyle='#fff';
+  ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#000';
+  const cell=4; // ピクセルサイズ（粗いドット感を出す）
+  for(let y=0; y<H; y+=cell){
+    // 上(0)で黒密度高い(=明るさ低い)、下(H)で黒密度低い(=明るさ高い)
+    const t = y/H; // 0(上)→1(下)
+    // 明るさレベル0〜16: 上は3〜5(濃いグレー)、下は12〜14(薄いグレー)
+    const level = Math.floor(3 + t*10);
+    for(let x=0; x<W; x+=cell){
+      const px=Math.floor(x/cell)%4, py=Math.floor(y/cell)%4;
+      const threshold = DITHER_PATTERNS[py][px];
+      if(threshold < level){
+        ctx.fillRect(x,y,cell,cell);
+      }
+    }
+  }
+}
+
 // ============================================================
 // 花火エフェクト
 // ============================================================
@@ -676,12 +705,9 @@ function gameLoop(){
   const cv=document.getElementById('game-cv'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
 
   if(bk.state==='fireworks'){
-    // Old Macintosh風: 上から下へのグレートーン・グラデーション背景
-    const grad=ctx.createLinearGradient(0,0,0,H);
-    grad.addColorStop(0,   '#3a3a3a');
-    grad.addColorStop(0.5, '#1c1c1c');
-    grad.addColorStop(1,   '#000000');
-    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+    // Old Macintosh風: 1bitディザパターンでグレートーンを表現
+    // 上=濃いグレー（黒多め）→ 下=薄いグレー（白多め）
+    drawDitherGradient(ctx,W,H);
 
     updateFireworks();
     drawFireworks(ctx);
@@ -689,22 +715,29 @@ function gameLoop(){
     const t=Date.now();
     const blink = Math.floor(t/400)%2===0; // CLICK文字のみ点滅
 
-    // 多言語おめでとうテキスト（常時表示・点滅なし）
+    // テキストエリアに白い背景パネル（Macダイアログ風）— ディザ背景でも文字を確実に視認可能に
+    const panelY = H*0.28, panelH = H*0.62;
+    ctx.fillStyle='#fff';
+    ctx.fillRect(0, panelY, W, panelH);
+    ctx.strokeStyle='#000'; ctx.lineWidth=2;
+    ctx.strokeRect(1, panelY, W-2, panelH);
+
+    // 多言語おめでとうテキスト（常時表示・点滅なし）— 黒文字
     const msgs=[
-      {t:'おめでとうございます！', f:'bold '+Math.round(W*0.062)+'px VT323,monospace', y:H*0.36},
-      {t:'Congratulations!',        f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.48},
-      {t:'恭喜恭喜！',              f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.58},
+      {t:'おめでとうございます！', f:'bold '+Math.round(W*0.062)+'px VT323,monospace', y:H*0.40},
+      {t:'Congratulations!',        f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.50},
+      {t:'恭喜恭喜！',              f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.59},
       {t:'¡Felicidades!',           f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.68},
     ];
     ctx.textAlign='center';
-    ctx.fillStyle='#fff';
+    ctx.fillStyle='#000';
     msgs.forEach((m)=>{
       ctx.font=m.f; ctx.fillText(m.t,W/2,m.y);
     });
 
     // CLICKでタイトルへ（これだけ点滅。区切り線は表示しない）
     ctx.font=`${Math.round(W*0.036)}px VT323,monospace`;
-    ctx.fillStyle = blink ? '#fff' : 'rgba(255,255,255,0)';
+    ctx.fillStyle = blink ? '#000' : 'rgba(0,0,0,0)';
     ctx.fillText('CLICK でタイトルへ',W/2,H*0.85);
     ctx.textAlign='left';
 
