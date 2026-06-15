@@ -99,6 +99,30 @@ body {
   display: none; z-index: 22;
 }
 
+/* ストーリーオーバーレイ */
+#story-overlay {
+  position: absolute; inset: 0; background: rgba(255,255,255,0.96);
+  z-index: 40; display: none; flex-direction: column;
+  font-family: 'Noto Sans JP', sans-serif; font-weight: 300;
+}
+#story-overlay.active { display: flex; }
+#story-box {
+  margin: auto; padding: 24px 28px;
+  max-width: 86%; max-height: 78%;
+  border: 2px solid #000; background: #fff;
+  display: flex; flex-direction: column;
+  cursor: pointer;
+}
+#story-text {
+  font-size: clamp(13px,2.4vw,16px);
+  line-height: 1.9; color: #222;
+  overflow-y: auto; white-space: pre-wrap;
+}
+#story-foot {
+  margin-top: 14px; text-align: right;
+  font-size: clamp(11px,2vw,13px); color: #888;
+}
+
 /* ブロック崩し */
 #game-overlay {
   position: absolute; inset: 0; background: #fff;
@@ -164,6 +188,15 @@ body {
 
   <!-- バブル -->
   <div id="bubble"></div>
+
+  <!-- ストーリーオーバーレイ -->
+  <div id="story-overlay">
+    <div id="story-box">
+      <div id="story-text"></div>
+      <div id="story-foot"></div>
+    </div>
+  </div>
+
 
   <!-- ブロック崩し -->
   <div id="game-overlay">
@@ -319,6 +352,44 @@ setTimeout(scheduleBlink, 1500);
 setTimeout(scheduleRandomFace, 5000);
 
 // ============================================================
+// 顔クリック → ストーリー表示
+// ============================================================
+const storyPages=[
+"このサイトは1999年からの作成したWebサイト、ブログの倉庫ですよ。\nいにしえの仕様はすべてAIに直してもらった。",
+"naramania\n\n1999年に作成の自分史上、現存する最古のWebサイトです。\n奈良の情報ページです。今見るとびっくりするぐらい情報が少ないけれども、当時はWebサイト（ホームページ（HP)とその頃はいわれていました）自体が少なく、こんなサイトでも情報誌（奈良の情報誌ぱーぷる）にも紹介されました。また、当時のYahooはそういった個人が作成したHPをカテゴリごとに紹介するポータルサイトだったので、Yahooでも掲載されていました。",
+"女王様の全自動卓（Queens mahjong table)\n\nCGI（無料配布されていたNicky! https://xtech.nikkei.com/it/article/COLUMN/20071022/285134/)\nを使用した日記サイト（当時はブログという言葉も無かった記憶…）\n様々なブログサイト、twitterなどのSNSに押されてこれら日記サイトも縮小していきました。\n当時の若いパワーが溢れている（無駄に熱量の多い）サイトです。",
+"直島観光（Naoshima sightseeing)\n\n2005年に訪れた直島に感動して作成したページ。これは3代目のサイトで、2007、2010と再訪し、訪問事に情報を刷新していました。\n今は世界的な観光地となった直島ですが、2005年当時は紹介するWebサイトも無く（直島観光協会があるぐらい）\n直島の知名度が上がるにつれ、アクセスも非常に多かった。",
+"かに風味（kaniaji)\n\nFC2ブログで更新していたブログ\nここはまだ現役で使われている人も多そうですね。広告が出るので煩わしいので、バックアップデータを取ってきてAIに丸投げしました。"
+];
+let storyIdx=0;
+const storyOverlay=document.getElementById('story-overlay');
+const storyText=document.getElementById('story-text');
+const storyFoot=document.getElementById('story-foot');
+
+function renderStory(){
+  storyText.textContent=storyPages[storyIdx];
+  storyFoot.textContent=(storyIdx+1)+' / '+storyPages.length+(storyIdx<storyPages.length-1?'　▶ クリックで次へ':'　▶ クリックで閉じる');
+}
+function openStory(){
+  storyIdx=0;
+  renderStory();
+  storyOverlay.classList.add('active');
+}
+function advanceStory(){
+  if(storyIdx<storyPages.length-1){
+    storyIdx++;
+    renderStory();
+    storyText.scrollTop=0;
+  } else {
+    storyOverlay.classList.remove('active');
+  }
+}
+document.getElementById('story-box').addEventListener('click',(e)=>{
+  e.stopPropagation();
+  advanceStory();
+});
+
+// ============================================================
 // 顔クリック
 // ============================================================
 const faceLines=[
@@ -334,7 +405,7 @@ let faceIdx=0;
 document.getElementById('spot-face').addEventListener('click',()=>{
   beep(660,'sine',0.18,0.07);
   doBlink();
-  showBubble(faceLines[faceIdx++%faceLines.length]);
+  openStory();
 });
 
 // ============================================================
