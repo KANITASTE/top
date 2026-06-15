@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KANITASTE</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Noto+Sans+JP:wght@300&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: #fff;
+  font-family: 'VT323', monospace;
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 40px 20px 60px;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='20'%3E%3Cpolygon points='0,0 0,16 5,11 8,18 10,17 7,10 13,10' fill='%23000' stroke='%23fff' stroke-width='1'/%3E%3C/svg%3E") 0 0, default;
+}
+
+#scene {
+  position: relative;
+  width: 100%; max-width: 640px;
+  user-select: none; overflow: hidden;
+}
+#main-img { width:100%; height:auto; display:block; }
+
+/* 表情オーバーレイ — シーン全体にかぶせてクロスフェード */
+#face-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 5;
+  opacity: 0;
+}
+#face-overlay img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+
+/* UFOシーケンスオーバーレイ */
+#ufo-scene-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 6;
+  opacity: 0;
+}
+#ufo-scene-overlay img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+
+/* ホワイトアウト */
+#whiteout {
+  position: absolute; inset: 0;
+  background: #fff; z-index: 50;
+  opacity: 0; pointer-events: none;
+}
+
+/* ホットスポット */
+.spot {
+  position: absolute;
+  cursor: pointer;
+}base64,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") 10 1, pointer;
+}
+#spot-face    { top:38.67%; left:62.68%; width:20.96%; height:16.29%; }
+#spot-cat     { top:64.60%; left:69.67%; width:10.34%; height:11.28%; }
+#spot-tv      { top:35.85%; left:23.27%; width:13.42%; height:15.01%; }
+#spot-fami    { top:74.61%; left:6.29%;  width:16.00%; height:16.56%; }
+#spot-window  { top:8.83%;  left:4.05%;  width:11.74%; height:44.68%; z-index:10; }
+#spot-mikan   { top:53.78%; left:40.25%; width:12.09%; height:11.74%; }
+#spot-kotatsu { top:80.71%; left:48.43%; width:14.54%; height:11.92%; }
+
+/* みかんの手 */
+#hand-sprite {
+  position: absolute;
+  top: 42.3%; left: 43.3%;
+  width: 14.8%;
+  opacity: 0; pointer-events: none; z-index: 14;
+}
+#hand-sprite img { width:100%; height:auto; display:block; }
+
+/* コタツ猫 — preview赤線位置に合わせて調整
+   コタツ天板すぐ下: top約68%, 中央寄り */
+#kcat-sprite {
+  position: absolute;
+  top: 78.3%; left: 45.4%;
+  width: 16.8%;
+  opacity: 0; pointer-events: none; z-index: 26;
+}
+#kcat-sprite img { width:100%; height:auto; display:block; }
+
+/* バブル */
+#bubble {
+  position: absolute;
+  top: 3%; left: 50%; transform: translateX(-50%);
+  background: #fff; border: 2px solid #000;
+  padding: 5px 16px;
+  font-size: clamp(14px, 3vw, 19px);
+  white-space: nowrap; pointer-events: none;
+  display: none; z-index: 22;
+}
+
+/* ストーリーオーバーレイ */
+#story-overlay {
+  position: absolute; inset: 0; background: rgba(255,255,255,0.96);
+  z-index: 40; display: none; flex-direction: column;
+  font-family: 'Noto Sans JP', sans-serif; font-weight: 300;
+}
+#story-overlay.active { display: flex; }
+#story-box {
+  margin: auto; padding: 24px 28px;
+  max-width: 86%; max-height: 78%;
+  border: 2px solid #000; background: #fff;
+  display: flex; flex-direction: column;
+  cursor: pointer;
+}
+#story-text {
+  font-size: clamp(13px,2.4vw,16px);
+  line-height: 1.9; color: #222;
+  overflow-y: auto; white-space: pre-wrap;
+}
+#story-foot {
+  margin-top: 14px; text-align: right;
+  font-size: clamp(11px,2vw,13px); color: #888;
+}
+
+/* ブロック崩し */
+#game-overlay {
+  position: absolute; inset: 0; background: #fff;
+  z-index: 30; display: none; flex-direction: column;
+}
+#game-overlay.active { display: flex; }
+#game-topbar {
+  height: 28px; background: #000; color: #fff; font-size: 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 8px; flex-shrink: 0;
+}
+#game-topbar button {
+  background: none; border: 1px solid #fff; color: #fff;
+  font-family: 'VT323', monospace; font-size: 16px;
+  cursor: pointer; padding: 0 6px;
+}
+#game-cv { flex: 1; display: block; width: 100%; background: #fff; }
+
+/* info */
+#info { width: 100%; max-width: 640px; margin-top: 24px; padding: 0 4px; }
+.years {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 300;
+  font-size: clamp(13px,2vw,15px);
+  color: #888; line-height: 2.4; margin-bottom: 14px;
+  text-align: left;
+  display: table; margin-left: auto; margin-right: auto;
+}
+.years a { color:#888; text-decoration:none; border-bottom:1px solid #ccc; }
+.years a:hover { color:#000; border-color:#000; }
+.links {
+  display: flex; gap:20px; flex-wrap:wrap;
+  justify-content: center;
+}
+.links a {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 300;
+  font-size: clamp(14px,2vw,16px); color:#000;
+  text-decoration:none; border-bottom:1px solid #000; padding-bottom:1px;
+}
+.links a:hover { background:#000; color:#fff; }
+@media(max-width:480px){ body{padding:20px 12px 48px;} }
+</style>
+</head>
+<body>
+
+<div id="scene">
+  <!-- メイン画像: main.pngに変更 -->
+  <img src="main.png" alt="KANITASTE" id="main-img">
+
+  <!-- 表情オーバーレイ -->
+  <div id="face-overlay"><img src="" alt="" id="face-overlay-img"></div>
+
+  <!-- UFOシーケンスオーバーレイ -->
+  <div id="ufo-scene-overlay"><img src="" alt="" id="ufo-overlay-img"></div>
+
+  <!-- ホワイトアウト -->
+  <div id="whiteout"></div>
+
+  <!-- イベントスプライト -->
+  <div id="hand-sprite"><img src="hand.png" alt=""></div>
+  <div id="kcat-sprite"><img src="cat.png" alt=""></div>
+
+  <!-- バブル -->
+  <div id="bubble"></div>
+
+  <!-- ストーリーオーバーレイ -->
+  <div id="story-overlay">
+    <div id="story-box">
+      <div id="story-text"></div>
+      <div id="story-foot"></div>
+    </div>
+  </div>
+
+
+  <!-- ブロック崩し -->
+  <div id="game-overlay">
+    <div id="game-topbar">
+      <span>&#9632; BLOCK KUZUSHI</span>
+      <button onclick="closeGame()">&#10005; 閉じる</button>
+    </div>
+    <canvas id="game-cv"></canvas>
+  </div>
+
+  <!-- ホットスポット -->
+  <div class="spot" id="spot-face"></div>
+  <div class="spot" id="spot-cat"></div>
+  <div class="spot" id="spot-tv"></div>
+  <div class="spot" id="spot-fami"></div>
+  <div class="spot" id="spot-window"></div>
+  <div class="spot" id="spot-mikan"></div>
+  <div class="spot" id="spot-kotatsu"></div>
+</div>
+
+<div id="info">
+  <div class="years">
+    1999–2000 &nbsp;<a href="https://kanitaste.github.io/naramania1999/" target="_blank" rel="noopener">naramania</a><br>
+    2003–2007 &nbsp;<a href="https://kanitaste.github.io/zentaku/" target="_blank" rel="noopener">Queen's mahjong table</a><br>
+    2005–2010 &nbsp;<a href="https://kanitaste.github.io/naoshima2005-2010/" target="_blank" rel="noopener">Naoshima sightseeing</a><br>
+    2007–2019 &nbsp;<a href="https://kanitaste.github.io/fc2/" target="_blank" rel="noopener">kaniaji</a>
+  </div>
+  <div class="links">
+    <a href="https://x.com/kaniaji" target="_blank" rel="noopener">→ twitter</a>
+    <a href="#" onclick="return false">→ works</a>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// UTILS
+// ============================================================
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+let _ac = null;
+function getAC(){
+  if(!_ac){ try{ _ac=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  return _ac;
+}
+function beep(freq, type, dur, vol){
+  const ac=getAC(); if(!ac) return;
+  try{
+    const o=ac.createOscillator(), g=ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type=type||'square'; o.frequency.value=freq;
+    g.gain.setValueAtTime(vol||0.08, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+dur);
+    o.start(); o.stop(ac.currentTime+dur);
+  }catch(e){}
+}
+const store={
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} },
+};
+const bubbleEl=document.getElementById('bubble');
+let bubbleTimer=null;
+function showBubble(text){
+  bubbleEl.textContent=text; bubbleEl.style.display='block';
+  clearTimeout(bubbleTimer);
+  bubbleTimer=setTimeout(()=>{ bubbleEl.style.display='none'; },2600);
+}
+
+// ============================================================
+// 表情アニメーション
+// ロジック:
+//   - 基本はmain1.png（ベース画像がmain1相当なのでオーバーレイなし）
+//   - まばたき: 2→3→(間)→8→(間)→元に戻る を人間らしい速度で
+//   - たまに（20〜60秒に一度）5/6/7のランダム表情に切り替え
+// ============================================================
+const faceOverlay    = document.getElementById('face-overlay');
+const faceOverlayImg = document.getElementById('face-overlay-img');
+
+// 画像プリロード
+['face/main2.png','face/main3.png','face/main5.png',
+ 'face/main6.png','face/main7.png','face/main8.png'].forEach(src=>{
+  const i=new Image(); i.src=src;
+});
+
+let blinkLocked = false; // まばたき中はランダム表情を止める
+
+// オーバーレイ表示（speed: transition秒数）
+function showFace(src, fadeInSec, holdMs, fadeOutSec, onDone){
+  faceOverlayImg.src = src;
+  faceOverlay.style.transition = `opacity ${fadeInSec}s ease`;
+  faceOverlay.style.opacity = '1';
+  setTimeout(()=>{
+    faceOverlay.style.transition = `opacity ${fadeOutSec}s ease`;
+    faceOverlay.style.opacity = '0';
+    if(onDone) setTimeout(onDone, fadeOutSec*1000);
+  }, holdMs);
+}
+
+// まばたきシーケンス: 2→3→8 を素早く繋いで自然なまばたきを演出
+function doBlink(){
+  if(blinkLocked) return;
+  blinkLocked = true;
+
+  // main2（目を細める） 60ms
+  faceOverlayImg.src = 'face/main2.png';
+  faceOverlay.style.transition = 'opacity 0.04s ease';
+  faceOverlay.style.opacity = '1';
+
+  setTimeout(()=>{
+    // main3（完全に閉じる） 80ms
+    faceOverlayImg.src = 'face/main3.png';
+  }, 60);
+
+  setTimeout(()=>{
+    // main8（薄目で開き始め） 60ms
+    faceOverlayImg.src = 'face/main8.png';
+  }, 140);
+
+  setTimeout(()=>{
+    // 元に戻る
+    faceOverlay.style.transition = 'opacity 0.06s ease';
+    faceOverlay.style.opacity = '0';
+    setTimeout(()=>{ blinkLocked = false; }, 80);
+  }, 200);
+}
+
+// まばたきスケジューラ: 2〜6秒ごと、たまにダブルまばたき
+function scheduleBlink(){
+  const delay = 2000 + Math.random()*4000;
+  setTimeout(()=>{
+    doBlink();
+    // 30%の確率でダブルまばたき
+    if(Math.random() < 0.3){
+      setTimeout(doBlink, 350);
+    }
+    scheduleBlink();
+  }, delay);
+}
+
+// ランダム表情（5/6/7）: 20〜60秒ごとにたまに出現
+function scheduleRandomFace(){
+  const delay = 20000 + Math.random()*40000;
+  setTimeout(()=>{
+    if(!blinkLocked && !ufoRunning){
+      const faces = ['face/main5.png','face/main6.png','face/main7.png'];
+      showFace(rand(faces), 0.4, 3000+Math.random()*2000, 0.6);
+    }
+    scheduleRandomFace();
+  }, delay);
+}
+
+// 少し遅らせて開始（ページ読み込み後）
+setTimeout(scheduleBlink, 1500);
+setTimeout(scheduleRandomFace, 5000);
+
+// ============================================================
+// 顔クリック → ストーリー表示
+// ============================================================
+const storyPages=[
+"このサイトは1999年からの作成したWebサイト、ブログの倉庫ですよ。\nいにしえの仕様はすべてAIに直してもらった。",
+"naramania\n\n1999年に作成の自分史上、現存する最古のWebサイトです。\n奈良の情報ページです。今見るとびっくりするぐらい情報が少ないけれども、当時はWebサイト（ホームページ（HP)とその頃はいわれていました）自体が少なく、こんなサイトでも情報誌（奈良の情報誌ぱーぷる）にも紹介されました。また、当時のYahooはそういった個人が作成したHPをカテゴリごとに紹介するポータルサイトだったので、Yahooでも掲載されていました。",
+"女王様の全自動卓（Queens mahjong table)\n\nCGI（無料配布されていたNicky! https://xtech.nikkei.com/it/article/COLUMN/20071022/285134/)\nを使用した日記サイト（当時はブログという言葉も無かった記憶…）\n様々なブログサイト、twitterなどのSNSに押されてこれら日記サイトも縮小していきました。\n当時の若いパワーが溢れている（無駄に熱量の多い）サイトです。",
+"直島観光（Naoshima sightseeing)\n\n2005年に訪れた直島に感動して作成したページ。これは3代目のサイトで、2007、2010と再訪し、訪問事に情報を刷新していました。\n今は世界的な観光地となった直島ですが、2005年当時は紹介するWebサイトも無く（直島観光協会があるぐらい）\n直島の知名度が上がるにつれ、アクセスも非常に多かった。",
+"かに風味（kaniaji)\n\nFC2ブログで更新していたブログ\nここはまだ現役で使われている人も多そうですね。広告が出るので煩わしいので、バックアップデータを取ってきてAIに丸投げしました。"
+];
+let storyIdx=0;
+const storyOverlay=document.getElementById('story-overlay');
+const storyText=document.getElementById('story-text');
+const storyFoot=document.getElementById('story-foot');
+
+function renderStory(){
+  storyText.textContent=storyPages[storyIdx];
+  storyFoot.textContent=(storyIdx+1)+' / '+storyPages.length+(storyIdx<storyPages.length-1?'　▶ クリックで次へ':'　▶ クリックで閉じる');
+}
+function openStory(){
+  storyIdx=0;
+  renderStory();
+  storyOverlay.classList.add('active');
+}
+function advanceStory(){
+  if(storyIdx<storyPages.length-1){
+    storyIdx++;
+    renderStory();
+    storyText.scrollTop=0;
+  } else {
+    storyOverlay.classList.remove('active');
+  }
+}
+document.getElementById('story-box').addEventListener('click',(e)=>{
+  e.stopPropagation();
+  advanceStory();
+});
+
+// ============================================================
+// 顔クリック
+// ============================================================
+const faceLines=[
+  'ん〜……こんにちはだねぇ〜！',
+  'それ面白いね〜！',
+  'ん〜……猫かわいいよね〜',
+  'ワイン飲みたいねぇ〜',
+  'DISCO(6146)、気になっとるとよ〜',
+  'ん〜……みかんおいしいね〜',
+  '宮崎はええとこだよぉ〜',
+];
+let faceIdx=0;
+document.getElementById('spot-face').addEventListener('click',()=>{
+  beep(660,'sine',0.18,0.07);
+  doBlink();
+  openStory();
+});
+
+// ============================================================
+// 膝の猫（5回でシェイク）
+// ============================================================
+const meows=['にゃー！','みゃー♪','ふにゃ〜','にゃん！','みゅー？'];
+let catClicks=0, catTimer=null;
+document.getElementById('spot-cat').addEventListener('click',()=>{
+  catClicks++;
+  clearTimeout(catTimer);
+  catTimer=setTimeout(()=>{ catClicks=0; },2500);
+  if(catClicks>=5){
+    beep(200,'sawtooth',0.5,0.2);
+    showBubble('シャーーー！！');
+    const sc=document.getElementById('scene');
+    let n=0;
+    const sh=setInterval(()=>{
+      sc.style.transform=n++%2?'translateX(6px)':'translateX(-6px)';
+      if(n>8){ clearInterval(sh); sc.style.transform=''; catClicks=0; }
+    },50);
+    return;
+  }
+  beep(rand([460,520,580]),'sine',0.22,0.08);
+  showBubble(rand(meows));
+});
+
+// ============================================================
+// テレビ
+// ============================================================
+const tvLines=['ジー……','（テトリスがやりたいなぁ）','ザザッ…','（UFO特集やってる）'];
+let tvIdx=0;
+document.getElementById('spot-tv').addEventListener('click',()=>{
+  beep(120,'square',0.12,0.08);
+  showBubble(tvLines[tvIdx++%tvLines.length]);
+});
+
+// ============================================================
+// みかんの手
+// ============================================================
+let handBusy=false;
+function playHand(){
+  if(handBusy) return; handBusy=true;
+  const el=document.getElementById('hand-sprite');
+  el.style.transition='none'; el.style.transform='translate(3%,2%)'; el.style.opacity='0';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    el.style.transition='opacity 2.2s ease, transform 2.2s ease';
+    el.style.opacity='1'; el.style.transform='translate(0,0)';
+  }));
+  beep(180,'sine',0.4,0.04);
+  setTimeout(()=>{
+    el.style.transition='transform 0.25s ease';
+    el.style.transform='translate(0.6%,-0.5%)';
+    setTimeout(()=>{ el.style.transform='translate(0,0)'; },260);
+    beep(240,'sine',0.2,0.05);
+  },2600);
+  setTimeout(()=>{
+    el.style.transition='opacity 2.2s ease, transform 2.2s ease';
+    el.style.opacity='0'; el.style.transform='translate(3%,2%)';
+  },3600);
+  setTimeout(()=>{ handBusy=false; },6000);
+}
+document.getElementById('spot-mikan').addEventListener('click',()=>{ showBubble('！？'); playHand(); });
+function scheduleHand(){
+  setTimeout(()=>{ playHand(); scheduleHand(); },25000+Math.random()*40000);
+}
+scheduleHand();
+
+// ============================================================
+// コタツ猫 — preview.webpの赤線位置（コタツ天板直下）で出現
+// top:68%, left:30%, width:22% に設定済み
+// ポップアップしてこちらに向かってズーム→フェードアウト
+// ============================================================
+let kcatBusy=false;
+function playKotatsuCat(){
+  if(kcatBusy) return; kcatBusy=true;
+  const el=document.getElementById('kcat-sprite');
+
+  // フェードイン（その場に現れる）
+  el.style.transition='none';
+  el.style.transform='scale(1)';
+  el.style.opacity='0';
+
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    el.style.transition='opacity 0.5s ease';
+    el.style.opacity='1';
+  }));
+  beep(200,'sawtooth',0.35,0.13);
+
+  // しばらく表示してからズームしてフェードアウト
+  setTimeout(()=>{
+    el.style.transition='transform 1.6s cubic-bezier(0.4,0,0.8,0.3), opacity 1.0s ease 0.5s';
+    el.style.transform='scale(6) translateY(-20%)';
+    el.style.opacity='0';
+    beep(160,'sawtooth',0.6,0.14);
+    setTimeout(()=>beep(140,'sawtooth',0.35,0.09),220);
+  },1200);
+
+  setTimeout(()=>{
+    el.style.transition='none';
+    el.style.transform='scale(1)';
+    el.style.opacity='0';
+    kcatBusy=false;
+  },3200);
+}
+document.getElementById('spot-kotatsu').addEventListener('click',()=>{ showBubble('！！'); playKotatsuCat(); });
+
+// ============================================================
+// UFO — 左窓クリックでUFO1〜8のシーケンスアニメーション
+// UFO未出現時のみ発動。UFO8後に画面震え→ホワイトアウト→通常に戻る
+// ============================================================
+const ufoImages=[
+  'UFO/UFO1.png','UFO/UFO2.png','UFO/UFO3.png','UFO/UFO4.png',
+  'UFO/UFO5.png','UFO/UFO6.png','UFO/UFO7.png','UFO/UFO8.png',
+];
+// プリロード
+ufoImages.forEach(src=>{ const i=new Image(); i.src=src; });
+
+let ufoRunning=false;
+const ufoOverlay    = document.getElementById('ufo-scene-overlay');
+const ufoOverlayImg = document.getElementById('ufo-overlay-img');
+const whiteout      = document.getElementById('whiteout');
+const sceneEl       = document.getElementById('scene');
+
+function playUFOSound(){
+  try{
+    const ac=getAC(); if(!ac) return;
+    const osc=ac.createOscillator(), lfo=ac.createOscillator(),
+          lfoG=ac.createGain(), gain=ac.createGain();
+    lfo.connect(lfoG); lfoG.connect(osc.frequency);
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.type='sawtooth'; osc.frequency.value=180;
+    lfo.frequency.value=6; lfoG.gain.value=60;
+    gain.gain.setValueAtTime(0.15,ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+6);
+    lfo.start(); osc.start();
+    lfo.stop(ac.currentTime+6); osc.stop(ac.currentTime+6);
+  }catch(e){}
+}
+
+function shakeScene(times, interval, cb){
+  let n=0;
+  const sh=setInterval(()=>{
+    sceneEl.style.transform=n++%2?'translateX(7px) translateY(4px)':'translateX(-7px) translateY(-4px)';
+    if(n>times){ clearInterval(sh); sceneEl.style.transform=''; if(cb) cb(); }
+  }, interval);
+}
+
+function triggerUFO(){
+  if(ufoRunning) return;
+  ufoRunning=true;
+  playUFOSound();
+  showBubble('…窓の外に何かいる！');
+
+  // UFO中は表情アニメを完全停止（ちらつき防止）
+  faceOverlay.style.transition='none';
+  faceOverlay.style.opacity='0';
+
+  let frame=0;
+  // フレーム間隔: UFO1=700ms, 2-6=550→350ms, 7-8=280ms
+  const frameDurations=[700, 550, 500, 450, 400, 350, 280, 280];
+
+  function showNextFrame(){
+    if(frame >= ufoImages.length){
+      // 全フレーム表示後: 少し待って震え→ホワイトアウト
+      setTimeout(()=>{
+        shakeScene(16, 55, ()=>{
+          whiteout.style.transition='opacity 0.6s ease';
+          whiteout.style.opacity='1';
+          setTimeout(()=>{
+            // UFOオーバーレイ非表示
+            ufoOverlay.style.transition='none';
+            ufoOverlay.style.opacity='0';
+            ufoOverlayImg.src='';
+            // ホワイトアウト解除
+            whiteout.style.transition='opacity 0.9s ease';
+            whiteout.style.opacity='0';
+            setTimeout(()=>{ ufoRunning=false; },1000);
+          },700);
+        });
+      },600);
+      return;
+    }
+
+    const src=ufoImages[frame];
+    const dur=frameDurations[frame]||400;
+    frame++;
+
+    // UFO1枚目: フェードイン。2枚目以降はopacity触らずsrcだけ差し替え（ちらつきゼロ）
+    if(frame===1){
+      ufoOverlayImg.src=src;
+      ufoOverlay.style.transition='opacity 0.35s ease';
+      ufoOverlay.style.opacity='1';
+      setTimeout(showNextFrame, dur);
+    } else {
+      // opacityを変えずにsrcだけ切り替える
+      ufoOverlayImg.src=src;
+      setTimeout(showNextFrame, dur);
+    }
+  }
+
+  showNextFrame();
+}
+
+document.getElementById('spot-window').addEventListener('click',()=>{
+  if(!ufoRunning){ triggerUFO(); }
+});
+
+// ============================================================
+// ファミコン
+// ============================================================
+document.getElementById('spot-fami').addEventListener('click',()=>{ beep(523,'square',0.12,0.07); openGame(); });
+
+// ============================================================
+// BREAKOUT — Level 1〜5 + 花火エンディング
+// ============================================================
+let gameRaf=null, gameOn=false;
+const bk={
+  ball:{x:0,y:0,vx:3,vy:-4,r:5}, pad:{x:0,y:0,w:0,h:8,spd:0},
+  bricks:[], score:0, lives:3, hi:0,
+  state:'title', // title|play|clear|over|fireworks
+  level:1, keys:{}, mouse:null,
+};
+
+// レベル設定: [rows, cols, speedMult, paddleWidthMult]
+const LEVELS=[
+  null, // index 0 unused
+  {rows:3, cols:7, spd:1.0, pw:0.20, label:'LEVEL 1'},
+  {rows:4, cols:8, spd:1.15, pw:0.18, label:'LEVEL 2'},
+  {rows:5, cols:8, spd:1.30, pw:0.16, label:'LEVEL 3'},
+  {rows:5, cols:9, spd:1.45, pw:0.14, label:'LEVEL 4'},
+  {rows:6, cols:9, spd:1.60, pw:0.12, label:'LEVEL 5 ★ FINAL'},
+];
+
+// 花火パーティクル
+let fireworks=[];
+
+function openGame(){
+  document.getElementById('game-overlay').classList.add('active');
+  gameOn=true;
+  const sc=document.getElementById('scene'), tb=document.getElementById('game-topbar'), cv=document.getElementById('game-cv');
+  cv.width=sc.offsetWidth; cv.height=Math.max(200,sc.offsetHeight-tb.offsetHeight);
+  bk.hi=parseInt(store.get('bk_hi')||'0');
+  bk.level=1; bk.state='title';
+  if(!gameRaf) gameLoop();
+}
+window.closeGame=function(){
+  document.getElementById('game-overlay').classList.remove('active');
+  if(gameRaf) cancelAnimationFrame(gameRaf); gameRaf=null; gameOn=false;
+  clearTimeout(fwTimer); fireworks=[];
+};
+
+function initBricks(cv){
+  bk.bricks=[];
+  const lv=LEVELS[bk.level];
+  const cols=lv.cols, rows=lv.rows, gx=5, gy=2;
+  const bw=(cv.width-gx*(cols+1))/cols, bh=Math.min(14,(cv.height*0.32)/rows);
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++)
+    bk.bricks.push({x:gx+c*(bw+gx), y:34+r*(bh+gy), w:bw, h:bh, alive:true, row:r});
+}
+function resetBall(cv){
+  bk.ball.x=cv.width/2; bk.ball.y=cv.height-60;
+  const lv=LEVELS[bk.level];
+  const a=(Math.random()*0.6+0.2)*(Math.random()<0.5?1:-1);
+  const s=(Math.min(cv.width,cv.height)*0.008+3)*lv.spd;
+  bk.ball.vx=Math.cos(a)*s; bk.ball.vy=-Math.abs(Math.sin(a)*s)-2*lv.spd;
+}
+function initPlay(cv, keepScore){
+  const lv=LEVELS[bk.level];
+  bk.pad.w=cv.width*lv.pw; bk.pad.h=8; bk.pad.spd=cv.width*0.016;
+  bk.pad.x=cv.width/2-bk.pad.w/2; bk.pad.y=cv.height-24;
+  if(!keepScore){ bk.score=0; bk.lives=3; }
+  initBricks(cv); resetBall(cv); bk.state='play';
+}
+
+function drawDither(ctx,W,H){
+  ctx.fillStyle='#000';
+  for(let x=0;x<W;x+=4){ctx.fillRect(x,0,2,3);ctx.fillRect(x,H-3,2,3);}
+  for(let y=0;y<H;y+=4){ctx.fillRect(0,y,3,2);ctx.fillRect(W-3,y,3,2);}
+}
+
+// hand.png風スクリーントーン: グレー地に白い網点（ドット）を重ねて濃淡を表現
+// 上部=網点少なく暗い、下部=網点多く明るい
+function drawDitherGradient(ctx,W,H){
+  // ベースはミッドグレー
+  ctx.fillStyle='#555';
+  ctx.fillRect(0,0,W,H);
+
+  const cell=6; // 網点の格子サイズ
+  ctx.fillStyle='#fff';
+  for(let y=0; y<H; y+=cell){
+    const t = y/H; // 0(上)→1(下)
+    // 網点の半径: 上はほぼ0(暗いまま)、下は大きく(明るくなる)
+    const maxR = cell*0.5;
+    const r = maxR * (0.08 + t*0.92);
+    if(r < 0.3) continue;
+    for(let x=0; x<W; x+=cell){
+      ctx.beginPath();
+      ctx.arc(x+cell/2, y+cell/2, r, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+}
+
+// ============================================================
+// 花火エフェクト
+// ============================================================
+function launchFirework(W,H){
+  const x=W*0.1+Math.random()*W*0.8;
+  const y=H*0.1+Math.random()*H*0.5;
+  const count=40+Math.floor(Math.random()*24);
+  // モノクロ: 白い粒子のみ（背景が黒なので白が光って見える）
+  for(let i=0;i<count;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=2+Math.random()*5;
+    fireworks.push({
+      x,y,
+      vx:Math.cos(angle)*speed,
+      vy:Math.sin(angle)*speed,
+      life:1.0,
+      decay:0.012+Math.random()*0.012,
+      size: Math.random()<0.5 ? 2 : 3, // ピクセル感を出すため2段階のみ
+    });
+  }
+}
+
+function updateFireworks(){ fireworks=fireworks.filter(f=>f.life>0); fireworks.forEach(f=>{ f.x+=f.vx; f.y+=f.vy; f.vy+=0.08; f.vx*=0.97; f.life-=f.decay; }); }
+
+function drawFireworks(ctx){
+  fireworks.forEach(f=>{
+    // フェードはdither感を出すため0.5刻みの明滅（連続グラデではなく白/グレーの2値に近い）
+    const alive = f.life > 0;
+    if(!alive) return;
+    ctx.globalAlpha = f.life > 0.35 ? 1 : (Math.floor(f.life*10)%2===0 ? 0.5 : 1);
+    ctx.fillStyle='#fff';
+    const s=Math.max(1, Math.round(f.size));
+    ctx.fillRect(Math.round(f.x), Math.round(f.y), s, s); // 矢印ではなくピクセル正方形
+  });
+  ctx.globalAlpha=1;
+}
+
+// 花火スケジューラ — 終了せずずっと飛び続ける
+let fwTimer=null;
+let fwCount=0;
+function startFireworks(W,H){
+  fwCount=0;
+  function shoot(){
+    if(bk.state!=='fireworks') return; // 画面が変わったら停止
+    launchFirework(W,H);
+    if(Math.random()>0.3) launchFirework(W,H); // たまに2発同時
+    fwCount++;
+    fwTimer=setTimeout(shoot, 350+Math.random()*450);
+  }
+  shoot();
+  // 最初の数発だけSEを鳴らす
+  [0,400,900,1400,2000].forEach(t=>setTimeout(()=>{ beep(1000,'square',0.15,0.1); setTimeout(()=>beep(700,'square',0.1,0.08),60); },t));
+}
+
+// ============================================================
+// GAME LOOP
+// ============================================================
+function gameLoop(){
+  if(!gameOn){gameRaf=null;return;}
+  const cv=document.getElementById('game-cv'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+
+  if(bk.state==='fireworks'){
+    // Old Macintosh風: 1bitディザパターンでグレートーンを表現
+    // 上=濃いグレー（黒多め）→ 下=薄いグレー（白多め）
+    drawDitherGradient(ctx,W,H);
+
+    updateFireworks();
+    drawFireworks(ctx);
+
+    // 多言語おめでとうテキスト（常時表示・点滅なし）— 白文字＋黒縁取りで視認性確保
+    const msgs=[
+      {t:'おめでとうございます！', f:'bold '+Math.round(W*0.062)+'px VT323,monospace', y:H*0.40},
+      {t:'Congratulations!',        f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.50},
+      {t:'恭喜恭喜！',              f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.59},
+      {t:'¡Felicidades!',           f:'bold '+Math.round(W*0.05)+'px VT323,monospace',  y:H*0.68},
+    ];
+    ctx.textAlign='center';
+    ctx.lineWidth=3;
+    ctx.strokeStyle='#000';
+    ctx.fillStyle='#fff';
+    msgs.forEach((m)=>{
+      ctx.font=m.f;
+      ctx.strokeText(m.t,W/2,m.y);
+      ctx.fillText(m.t,W/2,m.y);
+    });
+
+    // CLICKでタイトルへ（常時表示・太字・黒文字＋白縁取りで視認性確保）
+    ctx.font=`bold ${Math.round(W*0.042)}px VT323,monospace`;
+    ctx.lineWidth=3;
+    ctx.strokeStyle='#fff'; ctx.strokeText('CLICK でタイトルへ',W/2,H*0.85);
+    ctx.fillStyle='#000'; ctx.fillText('CLICK でタイトルへ',W/2,H*0.85);
+    ctx.textAlign='left';
+
+    // 画面外枠にディザボーダー（HyperCard風）
+    drawDither(ctx,W,H);
+
+    gameRaf=requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+
+  if(bk.state==='title'){
+    ctx.fillStyle='#000'; ctx.textAlign='center';
+    ctx.font=`bold ${Math.round(W*0.06)}px VT323,monospace`;
+    ctx.fillText('BLOCK KUZUSHI',W/2,H*0.28);
+    ctx.font=`${Math.round(W*0.038)}px VT323,monospace`;
+    ctx.fillText('HI: '+bk.hi,W/2,H*0.42);
+    // レベル選択表示
+    for(let i=1;i<=5;i++){
+      ctx.fillStyle= i===bk.level ? '#000':'#bbb';
+      ctx.fillText('LEVEL '+i+(i===5?' ★':''),W/2, H*(0.52+i*0.072));
+    }
+    ctx.fillStyle='#000';
+    ctx.font=`${Math.round(W*0.034)}px VT323,monospace`;
+    if(Math.floor(Date.now()/600)%2) ctx.fillText('クリック or SPACE でスタート',W/2,H*0.93);
+    drawDither(ctx,W,H);
+
+  } else if(bk.state==='play'){
+    gameUpdate(W,H); gameRender(ctx,W,H);
+
+  } else if(bk.state==='clear'){
+    ctx.fillStyle='#000'; ctx.textAlign='center';
+    ctx.font=`bold ${Math.round(W*0.065)}px VT323,monospace`;
+    ctx.fillText('STAGE CLEAR！',W/2,H*0.30);
+    ctx.font=`bold ${Math.round(W*0.045)}px VT323,monospace`;
+    ctx.fillText(LEVELS[bk.level].label+' CLEAR',W/2,H*0.44);
+    ctx.font=`${Math.round(W*0.038)}px VT323,monospace`;
+    ctx.fillText('SCORE: '+bk.score,W/2,H*0.56);
+    if(bk.level<5){
+      ctx.fillText('NEXT: LEVEL '+(bk.level+1),W/2,H*0.66);
+      if(Math.floor(Date.now()/600)%2) ctx.fillText('クリックで次のレベルへ',W/2,H*0.79);
+    } else {
+      if(Math.floor(Date.now()/600)%2) ctx.fillText('クリックで花火を見る！',W/2,H*0.79);
+    }
+    ctx.textAlign='left'; drawDither(ctx,W,H);
+
+  } else if(bk.state==='over'){
+    ctx.fillStyle='#000'; ctx.textAlign='center';
+    ctx.font=`bold ${Math.round(W*0.07)}px VT323,monospace`;
+    ctx.fillText('GAME OVER',W/2,H*0.35);
+    ctx.font=`${Math.round(W*0.042)}px VT323,monospace`;
+    ctx.fillText(LEVELS[bk.level].label,W/2,H*0.47);
+    ctx.fillText('SCORE: '+bk.score,W/2,H*0.57);
+    ctx.fillText('HI: '+bk.hi,W/2,H*0.67);
+    if(Math.floor(Date.now()/600)%2) ctx.fillText('クリックでもういちど',W/2,H*0.80);
+    ctx.textAlign='left'; drawDither(ctx,W,H);
+  }
+
+  gameRaf=requestAnimationFrame(gameLoop);
+}
+
+function gameUpdate(W,H){
+  const b=bk.ball,p=bk.pad;
+  if(bk.keys['ArrowLeft']||bk.keys['a']) p.x=Math.max(0,p.x-p.spd);
+  if(bk.keys['ArrowRight']||bk.keys['d']) p.x=Math.min(W-p.w,p.x+p.spd);
+  if(bk.mouse!==null) p.x=Math.max(0,Math.min(W-p.w,bk.mouse-p.w/2));
+  b.x+=b.vx; b.y+=b.vy;
+  if(b.x-b.r<0){b.x=b.r;b.vx=Math.abs(b.vx);}
+  if(b.x+b.r>W){b.x=W-b.r;b.vx=-Math.abs(b.vx);}
+  if(b.y-b.r<0){b.y=b.r;b.vy=Math.abs(b.vy);beep(660,'square',0.05,0.05);}
+  if(b.y>H+20){
+    bk.lives--; beep(150,'sawtooth',0.3,0.1);
+    if(bk.lives<=0){
+      bk.state='over';
+      if(bk.score>bk.hi){bk.hi=bk.score;store.set('bk_hi',bk.hi);}
+      return;
+    }
+    resetBall(document.getElementById('game-cv')); return;
+  }
+  if(b.y+b.r>p.y&&b.y+b.r<p.y+p.h&&b.x>p.x&&b.x<p.x+p.w){
+    b.vy=-Math.abs(b.vy); b.vx=((b.x-(p.x+p.w/2))/(p.w/2))*5.5; beep(440,'square',0.06,0.06);
+  }
+  for(const br of bk.bricks){
+    if(!br.alive) continue;
+    if(b.x+b.r>br.x&&b.x-b.r<br.x+br.w&&b.y+b.r>br.y&&b.y-b.r<br.y+br.h){
+      br.alive=false; b.vy=-b.vy;
+      bk.score+=10*bk.level; // レベルが高いほど高得点
+      beep(rand([523,659,784]),'square',0.05,0.05);
+    }
+  }
+  if(bk.bricks.every(br=>!br.alive)){
+    bk.state='clear';
+    if(bk.score>bk.hi){bk.hi=bk.score;store.set('bk_hi',bk.hi);}
+  }
+}
+
+function gameRender(ctx,W,H){
+  const b=bk.ball,p=bk.pad;
+  // レベルに応じたカラーパレット（モノクロベース）
+  const palettes=[
+    ['#000','#444','#888','#bbb','#ddd','#000'],
+    ['#000','#222','#555','#888','#aaa','#ccc'],
+    ['#111','#333','#666','#999','#bbb','#ddd'],
+    ['#000','#333','#555','#777','#999','#bbb'],
+    ['#000','#111','#333','#555','#777','#999'],
+  ];
+  const fills=palettes[bk.level-1]||palettes[0];
+  bk.bricks.forEach(br=>{
+    if(!br.alive)return;
+    ctx.fillStyle=fills[br.row%fills.length]; ctx.fillRect(br.x,br.y,br.w,br.h);
+    ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.fillRect(br.x+2,br.y+2,br.w-4,2);
+  });
+  ctx.fillStyle='#000'; ctx.fillRect(p.x,p.y,p.w,p.h);
+  ctx.fillStyle='#fff'; ctx.fillRect(p.x+2,p.y+1,p.w-4,2);
+  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+  ctx.font=`${Math.round(W*0.038)}px VT323,monospace`;
+  ctx.fillText('SCORE '+bk.score,6,22);
+  ctx.textAlign='center';
+  ctx.fillText(LEVELS[bk.level].label,W/2,22);
+  ctx.textAlign='right'; ctx.fillText('♥'.repeat(bk.lives),W-6,22);
+  ctx.textAlign='left'; drawDither(ctx,W,H);
+}
+
+document.addEventListener('keydown',e=>{
+  bk.keys[e.key]=true;
+  if(e.key===' '&&gameOn){e.preventDefault();gameAction();}
+  // 隠しコマンド: タイトル画面で [F] キー → 花火プレビュー
+  if(e.key==='f'&&gameOn&&bk.state==='title'){
+    const cv=document.getElementById('game-cv');
+    bk.state='fireworks'; fireworks=[];
+    startFireworks(cv.width,cv.height);
+  }
+});
+document.addEventListener('keyup',e=>{ bk.keys[e.key]=false; });
+
+const gcv=document.getElementById('game-cv');
+gcv.addEventListener('click',gameAction);
+gcv.addEventListener('mousemove',e=>{ const r=gcv.getBoundingClientRect(); bk.mouse=(e.clientX-r.left)*(gcv.width/r.width); });
+gcv.addEventListener('touchmove',e=>{ e.preventDefault(); const r=gcv.getBoundingClientRect(); bk.mouse=(e.touches[0].clientX-r.left)*(gcv.width/r.width); },{passive:false});
+gcv.addEventListener('touchstart',e=>{ const r=gcv.getBoundingClientRect(); bk.mouse=(e.touches[0].clientX-r.left)*(gcv.width/r.width); gameAction(); });
+
+function gameAction(){
+  if(!gameOn) return;
+  const cv=document.getElementById('game-cv');
+  if(bk.state==='title'){ bk.level=1; initPlay(cv,false); }
+  else if(bk.state==='play'){} // 何もしない
+  else if(bk.state==='over'){ initPlay(cv,false); }
+  else if(bk.state==='clear'){
+    if(bk.level<5){
+      bk.level++;
+      initPlay(cv,true); // スコア・ライフ引き継ぎ
+    } else {
+      // レベル5クリア → 花火！
+      bk.state='fireworks'; fireworks=[];
+      startFireworks(cv.width,cv.height);
+    }
+  }
+  else if(bk.state==='fireworks'){
+    // タイトルに戻る
+    clearTimeout(fwTimer); fireworks=[];
+    bk.level=1; bk.state='title';
+  }
+}
+</script>
+</body>
+</html>
