@@ -390,7 +390,14 @@ document.getElementById('story-box').addEventListener('click',(e)=>{
   advanceStory();
 });
 
-
+// ============================================================
+// 顔クリック
+// ============================================================
+document.getElementById('spot-face').addEventListener('click',()=>{
+  beep(660,'sine',0.18,0.07);
+  doBlink();
+  openStory();
+});
 
 // ============================================================
 // 膝の猫（5回でシェイク）
